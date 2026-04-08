@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,14 @@ const allLinks = [...leftLinks, ...rightLinks];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleNavClick = (to: string, active: boolean) => {
     if (!active) return;
@@ -33,7 +40,11 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? "bg-background/95 backdrop-blur-sm border-b border-border shadow-sm"
+        : "bg-transparent border-b border-transparent"
+    }`}>
       <div className="container mx-auto px-4 h-20 flex items-center justify-between md:justify-center relative">
 
         {/* Desktop: left links */}
@@ -44,7 +55,7 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => handleNavClick(link.to, link.active)}
-                className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white"}`}
               >
                 {link.label}
               </Link>
@@ -52,7 +63,7 @@ const Navbar = () => {
               <span
                 key={link.to}
                 title="Binnenkort beschikbaar"
-                className="text-sm font-sans text-muted-foreground/40 cursor-not-allowed whitespace-nowrap select-none"
+                className={`text-sm font-sans cursor-not-allowed whitespace-nowrap select-none ${scrolled ? "text-muted-foreground/40" : "text-white/30"}`}
               >
                 {link.label}
               </span>
@@ -63,7 +74,7 @@ const Navbar = () => {
         {/* Center logo */}
         <Link
           to="/"
-          className="font-serif text-xl md:text-2xl font-bold text-foreground tracking-wide text-center"
+          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white"}`}
         >
           Den Witten Haen
         </Link>
@@ -76,7 +87,7 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => handleNavClick(link.to, link.active)}
-                className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white"}`}
               >
                 {link.label}
               </Link>
@@ -84,7 +95,7 @@ const Navbar = () => {
               <span
                 key={link.to}
                 title="Binnenkort beschikbaar"
-                className="text-sm font-sans text-muted-foreground/40 cursor-not-allowed whitespace-nowrap select-none"
+                className={`text-sm font-sans cursor-not-allowed whitespace-nowrap select-none ${scrolled ? "text-muted-foreground/40" : "text-white/30"}`}
               >
                 {link.label}
               </span>
