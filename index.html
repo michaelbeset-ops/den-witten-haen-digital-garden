@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Den Witten Haen — Lunchroom Dordrecht</title>
+    <meta name="description" content="Lunchroom Den Witten Haen in het hart van Dordrecht. Lunch, high tea en meer in een monumentaal pand met verborgen stadstuin." />
+    <meta name="author" content="Den Witten Haen" />
+
+    <meta property="og:title" content="Den Witten Haen — Lunchroom Dordrecht" />
+    <meta property="og:description" content="Lunch, high tea & meer in een monumentaal pand in het centrum van Dordrecht." />
+    <meta property="og:type" content="website" />
+
+    <!-- SPA routing redirect handler for GitHub Pages -->
+    <script>
+      (function (l) {
+        if (l.search[1] === "p") {
+          var decoded = l.search
+            .slice(1)
+            .split("&")
+            .reduce(function (acc, s) {
+              var parts = s.split("=");
+              acc[parts[0]] = decodeURIComponent(parts[1] || "");
+              return acc;
+            }, {});
+          if (decoded.p) {
+            window.history.replaceState(
+              null,
+              null,
+              l.pathname + decoded.p + (decoded.q ? "?" + decoded.q : "") + l.hash
+            );
+          }
+        }
+      })(window.location);
+    </script>
+    <script type="module" crossorigin src="/den-witten-haen-digital-garden/assets/index-C3oEuF1-.js"></script>
+    <link rel="stylesheet" crossorigin href="/den-witten-haen-digital-garden/assets/index-eu4oEXu2.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
