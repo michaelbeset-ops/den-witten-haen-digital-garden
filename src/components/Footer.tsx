@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import philadelphiaLogo from "@/assets/philadelphia-logo.png";
 
 const Footer = () => (
   <footer id="contact" className="bg-foreground text-primary-foreground">
@@ -24,12 +25,27 @@ const Footer = () => (
           <Link to="/" className="opacity-80 hover:opacity-100 transition-opacity">Home</Link>
           <Link to="/menu" className="opacity-80 hover:opacity-100 transition-opacity">Menu</Link>
           <Link to="/reserveren" className="opacity-80 hover:opacity-100 transition-opacity">Reserveren</Link>
+          <Link to="/team" className="opacity-80 hover:opacity-100 transition-opacity">Ons Team</Link>
           <Link to="/privacy" className="opacity-80 hover:opacity-100 transition-opacity">Privacybeleid</Link>
           <Link to="/cookies" className="opacity-80 hover:opacity-100 transition-opacity">Cookiebeleid</Link>
         </div>
       </div>
     </div>
-    <div className="border-t border-primary-foreground/20 text-center py-4 text-xs opacity-60">
+
+    {/* Philadelphia */}
+    <div className="border-t border-primary-foreground/20 py-6">
+      <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <p className="text-xs opacity-60">Onderdeel van</p>
+        <img
+          src={philadelphiaLogo}
+          alt="Philadelphia – Het beste uit elkaar"
+          className="h-12 object-contain"
+          loading="lazy"
+        />
+      </div>
+    </div>
+
+    <div className="border-t border-primary-foreground/10 text-center py-4 text-xs opacity-50">
       © {new Date().getFullYear()} Den Witten Haen. Alle rechten voorbehouden.
     </div>
   </footer>
