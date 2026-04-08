@@ -54,15 +54,15 @@ const Index = () => {
       </section>
 
       {/* USPs */}
-      <section className="py-14 bg-card">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="py-10 bg-card">
+        <div className="container mx-auto px-4 grid grid-cols-3 gap-4">
           {usps.map((usp) => (
             <div key={usp.title} className="text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-                <usp.icon className="w-6 h-6 text-primary" />
+              <div className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 mb-2">
+                <usp.icon className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="font-serif text-lg mb-1">{usp.title}</h3>
-              <p className="text-muted-foreground text-sm font-sans">{usp.desc}</p>
+              <h3 className="font-serif text-sm md:text-lg mb-1 leading-tight">{usp.title}</h3>
+              <p className="text-muted-foreground text-xs font-sans hidden md:block">{usp.desc}</p>
             </div>
           ))}
         </div>
@@ -77,28 +77,28 @@ const Index = () => {
           </div>
           <div className="flex flex-col gap-4 max-w-2xl mx-auto">
             {/* Rij 1: Menu & Dranken */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <Link to="/menu">
-                <button className="w-full py-5 px-6 bg-primary text-primary-foreground font-serif text-xl rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
+                <button className="w-full h-14 px-4 bg-primary text-primary-foreground font-serif text-base md:text-lg rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
                   Menu
                 </button>
               </Link>
               <Link to="/menu">
-                <button className="w-full py-5 px-6 bg-primary text-primary-foreground font-serif text-xl rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
+                <button className="w-full h-14 px-4 bg-primary text-primary-foreground font-serif text-base md:text-lg rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
                   Dranken
                 </button>
               </Link>
             </div>
             {/* Rij 2: High Tea & Krakel-/Kraailunch */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <Link to="/menu">
-                <button className="w-full py-5 px-6 border-2 border-primary text-primary font-serif text-xl rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all">
+                <button className="w-full h-14 px-4 border-2 border-primary text-primary font-serif text-base md:text-lg rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all">
                   High Tea
                 </button>
               </Link>
               <Link to="/menu">
-                <button className="w-full py-5 px-6 border-2 border-primary text-primary font-serif text-xl rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all leading-tight">
-                  Krakel- &<br />Kraailunch
+                <button className="w-full h-14 px-4 border-2 border-primary text-primary font-serif text-sm md:text-lg rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all leading-tight">
+                  Krakel- & Kraailunch
                 </button>
               </Link>
             </div>
