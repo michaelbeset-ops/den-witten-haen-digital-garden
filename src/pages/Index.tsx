@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Landmark, TreePine, Heart, Star } from "lucide-react";
+import { Landmark, TreePine, Heart, Star, ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-interior.jpg";
 import gardenImage from "@/assets/garden.jpg";
 
