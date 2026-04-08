@@ -43,7 +43,7 @@ const Navbar = () => {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled
         ? "bg-background/95 backdrop-blur-sm border-b border-border shadow-sm"
-        : "bg-transparent md:bg-background/95 border-b border-transparent md:border-border md:shadow-sm"
+        : "bg-transparent border-b border-transparent"
     }`}>
       <div className="container mx-auto px-4 h-20 flex items-center justify-between md:justify-center relative">
 
@@ -55,7 +55,7 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => handleNavClick(link.to, link.active)}
-                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-muted-foreground md:hover:text-foreground"}`}
+                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-foreground/80 md:hover:text-foreground"}`}
               >
                 {link.label}
               </Link>
@@ -63,7 +63,7 @@ const Navbar = () => {
               <span
                 key={link.to}
                 title="Binnenkort beschikbaar"
-                className={`text-sm font-sans cursor-not-allowed whitespace-nowrap select-none ${scrolled ? "text-muted-foreground/40" : "text-white/30 md:text-muted-foreground/40"}`}
+                className={`text-sm font-sans cursor-not-allowed whitespace-nowrap select-none ${scrolled ? "text-muted-foreground/40" : "text-white/30 md:text-foreground/30"}`}
               >
                 {link.label}
               </span>
@@ -74,7 +74,7 @@ const Navbar = () => {
         {/* Center logo */}
         <Link
           to="/"
-          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white md:text-foreground"}`}
+          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white md:text-foreground drop-shadow md:drop-shadow-none"}`}
         >
           Den Witten Haen
         </Link>
@@ -87,7 +87,7 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => handleNavClick(link.to, link.active)}
-                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-muted-foreground md:hover:text-foreground"}`}
+                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-foreground/80 md:hover:text-foreground"}`}
               >
                 {link.label}
               </Link>
@@ -95,7 +95,7 @@ const Navbar = () => {
               <span
                 key={link.to}
                 title="Binnenkort beschikbaar"
-                className={`text-sm font-sans cursor-not-allowed whitespace-nowrap select-none ${scrolled ? "text-muted-foreground/40" : "text-white/30 md:text-muted-foreground/40"}`}
+                className={`text-sm font-sans cursor-not-allowed whitespace-nowrap select-none ${scrolled ? "text-muted-foreground/40" : "text-white/30 md:text-foreground/30"}`}
               >
                 {link.label}
               </span>
