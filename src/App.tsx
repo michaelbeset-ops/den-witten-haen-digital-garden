@@ -13,6 +13,7 @@ import PrivacyPage from "./pages/Privacy";
 import CookiePage from "./pages/Cookies";
 import GroupsPage from "./pages/Groepen";
 import LocationsPage from "./pages/Locaties";
+import TeamPage from "./pages/Team";
 import NotFound from "./pages/NotFound";
 import "@fontsource/playfair-display/400.css";
 import "@fontsource/playfair-display/700.css";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/reserveren" element={<ReservationPage />} />
           <Route path="/groepen" element={<GroupsPage />} />
           <Route path="/locaties" element={<LocationsPage />} />
+          <Route path="/team" element={<TeamPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/cookies" element={<CookiePage />} />
           <Route path="*" element={<NotFound />} />
