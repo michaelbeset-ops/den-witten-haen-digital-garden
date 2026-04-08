@@ -3,12 +3,19 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const navLinks = [
-  { to: "/menu", label: "Menu" },
-  { to: "/reserveren", label: "Reserveren" },
+const leftLinks = [
   { to: "/#over-ons", label: "Over ons" },
+  { to: "/menu", label: "Menu" },
+  { to: "/groepen", label: "Groepen & Vergaderen" },
+];
+
+const rightLinks = [
+  { to: "/locaties", label: "Onze Locaties" },
+  { to: "/reserveren", label: "Reserveren" },
   { to: "/#contact", label: "Contact" },
 ];
+
+const allLinks = [...leftLinks, ...rightLinks];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -26,26 +33,45 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link to="/" className="font-serif text-xl font-bold text-foreground tracking-wide">
-          Den Witten Haen
-        </Link>
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between md:justify-center relative">
 
-        {/* Desktop */}
-        <div className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
+        {/* Desktop: left links */}
+        <div className="hidden md:flex items-center gap-5 absolute left-4 lg:left-8">
+          {leftLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               onClick={() => handleNavClick(link.to)}
-              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
             >
               {link.label}
             </Link>
           ))}
         </div>
 
-        {/* Mobile */}
+        {/* Center logo */}
+        <Link
+          to="/"
+          className="font-serif text-xl md:text-2xl font-bold text-foreground tracking-wide text-center"
+        >
+          Den Witten Haen
+        </Link>
+
+        {/* Desktop: right links */}
+        <div className="hidden md:flex items-center gap-5 absolute right-4 lg:right-8">
+          {rightLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => handleNavClick(link.to)}
+              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Mobile: reserve + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
           <Link to="/reserveren">
             <Button size="sm" variant="hero">Reserveren</Button>
@@ -63,7 +89,7 @@ const Navbar = () => {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-background border-b border-border px-4 pb-4">
-          {navLinks.map((link) => (
+          {allLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
