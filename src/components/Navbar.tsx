@@ -55,7 +55,7 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => handleNavClick(link.to, link.active)}
-                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-foreground/80 md:hover:text-foreground"}`}
+                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-black md:hover:text-black/70"}`}
               >
                 {link.label}
               </Link>
@@ -74,7 +74,7 @@ const Navbar = () => {
         {/* Center logo */}
         <Link
           to="/"
-          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white md:text-foreground md:[text-shadow:0_1px_8px_rgba(255,255,255,0.8)]"}`}
+          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white md:text-black md:[text-shadow:0_1px_8px_rgba(255,255,255,0.8)]"}`}
         >
           Den Witten Haen
         </Link>
@@ -87,7 +87,7 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => handleNavClick(link.to, link.active)}
-                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-foreground/80 md:hover:text-foreground"}`}
+                className={`text-sm font-sans transition-colors whitespace-nowrap ${scrolled ? "text-muted-foreground hover:text-foreground" : "text-white/80 hover:text-white md:text-black md:hover:text-black/70"}`}
               >
                 {link.label}
               </Link>
