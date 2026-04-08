@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Landmark, TreePine, Heart, Star, ArrowRight } from "lucide-react";
+import { Landmark, TreePine, Heart, Star } from "lucide-react";
 import heroImage from "@/assets/hero-interior.jpg";
 import gardenImage from "@/assets/garden.jpg";
 
@@ -18,36 +18,6 @@ const usps = [
   { icon: Heart, title: "Sociaal betrokken", desc: "Inclusieve werkplek met hart en ziel" },
 ];
 
-const menuCategories = [
-  {
-    title: "High Tea",
-    desc: "Een verfijnd assortiment van zoet & hartig gebak, verse thee en naar keuze een glas prosecco. Ideaal voor een bijzonder moment met vriendinnen, familie of collega's.",
-    detail: "Klassiek € 24,95 · Deluxe € 32,50 p.p.",
-    href: "/menu",
-    accent: "border-t-rose-400",
-  },
-  {
-    title: "Krakel- & Kraailunch",
-    desc: "De perfecte groepslunch voor 10+ personen. Soep, luxe broodjes, warme snacks, onbeperkte dranken en vers fruit — perfect bij een vergadering, training of dagje uit.",
-    detail: "Kakellunch € 15,00 · Kraailunch € 17,50 p.p.",
-    href: "/groepen",
-    accent: "border-t-amber-400",
-  },
-  {
-    title: "Menu",
-    desc: "Van verse soep en ambachtelijke broodjes tot de quiche du jour en een uitsmijter. Dagelijks vers bereid met zorg en aandacht voor elk gerecht.",
-    detail: "Zie de volledige menukaart",
-    href: "/menu",
-    accent: "border-t-primary",
-  },
-  {
-    title: "Dranken",
-    desc: "Verse jus d'orange geperst op bestelling, huislimonade van het seizoen, diverse koffie- en theesoorten en een glas wijn. Voor elk moment de juiste dorstlesser.",
-    detail: "Koffie & thee v.a. € 2,75",
-    href: "/menu",
-    accent: "border-t-sky-400",
-  },
-];
 
 const Index = () => {
   return (
@@ -105,30 +75,33 @@ const Index = () => {
             <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Wat wij aanbieden</p>
             <h2 className="font-serif text-3xl md:text-4xl">Onze menu's</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {menuCategories.map((cat) => (
-              <Link
-                key={cat.title}
-                to={cat.href}
-                className="group bg-card rounded-xl border border-border hover:shadow-lg transition-shadow flex flex-col overflow-hidden"
-              >
-                <div className={`h-1 w-full ${cat.accent}`} />
-                <div className="p-7 flex flex-col flex-1">
-                  <h3 className="font-serif text-2xl mb-3 group-hover:text-primary transition-colors">
-                    {cat.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground font-sans leading-relaxed flex-1 mb-4">
-                    {cat.desc}
-                  </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-border">
-                    <span className="text-xs font-sans text-muted-foreground">{cat.detail}</span>
-                    <span className="flex items-center gap-1 text-xs text-primary font-sans font-medium group-hover:gap-2 transition-all">
-                      Bekijk <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
+          <div className="flex flex-col gap-4 max-w-2xl mx-auto">
+            {/* Rij 1: Menu & Dranken */}
+            <div className="grid grid-cols-2 gap-4">
+              <Link to="/menu">
+                <button className="w-full py-5 px-6 bg-primary text-primary-foreground font-serif text-xl rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
+                  Menu
+                </button>
               </Link>
-            ))}
+              <Link to="/menu">
+                <button className="w-full py-5 px-6 bg-primary text-primary-foreground font-serif text-xl rounded-xl hover:bg-primary/90 active:scale-95 transition-all shadow-sm">
+                  Dranken
+                </button>
+              </Link>
+            </div>
+            {/* Rij 2: High Tea & Krakel-/Kraailunch */}
+            <div className="grid grid-cols-2 gap-4">
+              <Link to="/menu">
+                <button className="w-full py-5 px-6 border-2 border-primary text-primary font-serif text-xl rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all">
+                  High Tea
+                </button>
+              </Link>
+              <Link to="/menu">
+                <button className="w-full py-5 px-6 border-2 border-primary text-primary font-serif text-xl rounded-xl hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all leading-tight">
+                  Krakel- &<br />Kraailunch
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

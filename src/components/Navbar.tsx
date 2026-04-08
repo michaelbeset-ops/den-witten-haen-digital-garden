@@ -4,15 +4,15 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const leftLinks = [
-  { to: "/#over-ons", label: "Over ons" },
-  { to: "/menu", label: "Menu" },
-  { to: "/groepen", label: "Groepen & Vergaderen" },
+  { to: "/#over-ons", label: "Over ons", active: true },
+  { to: "/menu", label: "Menu", active: true },
+  { to: "/groepen", label: "Groepen & Vergaderen", active: false },
 ];
 
 const rightLinks = [
-  { to: "/locaties", label: "Onze Locaties" },
-  { to: "/reserveren", label: "Reserveren" },
-  { to: "/#contact", label: "Contact" },
+  { to: "/locaties", label: "Onze Locaties", active: false },
+  { to: "/reserveren", label: "Reserveren", active: true },
+  { to: "/#contact", label: "Contact", active: false },
 ];
 
 const allLinks = [...leftLinks, ...rightLinks];
@@ -21,7 +21,8 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  const handleNavClick = (to: string) => {
+  const handleNavClick = (to: string, active: boolean) => {
+    if (!active) return;
     setOpen(false);
     if (to.startsWith("/#")) {
       const id = to.replace("/#", "");
@@ -37,16 +38,26 @@ const Navbar = () => {
 
         {/* Desktop: left links */}
         <div className="hidden md:flex items-center gap-5 absolute left-4 lg:left-8">
-          {leftLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => handleNavClick(link.to)}
-              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {leftLinks.map((link) =>
+            link.active ? (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => handleNavClick(link.to, link.active)}
+                className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <span
+                key={link.to}
+                title="Binnenkort beschikbaar"
+                className="text-sm font-sans text-muted-foreground/40 cursor-not-allowed whitespace-nowrap select-none"
+              >
+                {link.label}
+              </span>
+            )
+          )}
         </div>
 
         {/* Center logo */}
@@ -59,16 +70,26 @@ const Navbar = () => {
 
         {/* Desktop: right links */}
         <div className="hidden md:flex items-center gap-5 absolute right-4 lg:right-8">
-          {rightLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => handleNavClick(link.to)}
-              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {rightLinks.map((link) =>
+            link.active ? (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => handleNavClick(link.to, link.active)}
+                className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <span
+                key={link.to}
+                title="Binnenkort beschikbaar"
+                className="text-sm font-sans text-muted-foreground/40 cursor-not-allowed whitespace-nowrap select-none"
+              >
+                {link.label}
+              </span>
+            )
+          )}
         </div>
 
         {/* Mobile: reserve + hamburger */}
@@ -89,16 +110,25 @@ const Navbar = () => {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-background border-b border-border px-4 pb-4">
-          {allLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => handleNavClick(link.to)}
-              className="block py-3 text-base font-sans text-muted-foreground hover:text-foreground border-b border-border last:border-0"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {allLinks.map((link) =>
+            link.active ? (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => handleNavClick(link.to, link.active)}
+                className="block py-3 text-base font-sans text-muted-foreground hover:text-foreground border-b border-border last:border-0"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <span
+                key={link.to}
+                className="block py-3 text-base font-sans text-muted-foreground/40 border-b border-border last:border-0 cursor-not-allowed"
+              >
+                {link.label}
+              </span>
+            )
+          )}
         </div>
       )}
     </nav>
