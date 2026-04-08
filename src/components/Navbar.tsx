@@ -43,7 +43,7 @@ const Navbar = () => {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled
         ? "bg-background/95 backdrop-blur-sm border-b border-border shadow-sm"
-        : "bg-white/20 backdrop-blur-md border-b border-white/10 md:bg-white/30"
+        : "bg-transparent border-b border-transparent"
     }`}>
       <div className="container mx-auto px-4 h-20 flex items-center justify-between md:justify-center relative">
 
@@ -74,7 +74,7 @@ const Navbar = () => {
         {/* Center logo */}
         <Link
           to="/"
-          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white md:text-foreground drop-shadow md:drop-shadow-none"}`}
+          className={`font-serif text-xl md:text-2xl font-bold tracking-wide text-center transition-colors duration-300 ${scrolled ? "text-foreground" : "text-white md:text-foreground md:[text-shadow:0_1px_8px_rgba(255,255,255,0.8)]"}`}
         >
           Den Witten Haen
         </Link>
