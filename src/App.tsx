@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/CookieBanner";
+import ReservationPopup from "@/components/ReservationPopup";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import MenuPage from "./pages/Menu";
@@ -31,6 +32,7 @@ const PublicLayout = () => (
     <Navbar />
     <Outlet />
     <Footer />
+    <ReservationPopup />
     <CookieBanner />
   </>
 );
