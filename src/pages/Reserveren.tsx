@@ -99,24 +99,25 @@ const ReservationPage = () => {
     if (!validate()) return
 
     // Double-check slot availability (race condition guard)
+    // If the RPC fails for any reason, we skip the check and let the insert proceed.
     const { data: freshData, error: checkError } = await supabase
       .rpc('get_slot_counts', { check_date: date })
 
     if (checkError) {
-      setGeneralError('Er is een fout opgetreden. Probeer het opnieuw.')
-      return
-    }
+      console.warn('Slot-check RPC niet beschikbaar, insert wordt toch geprobeerd:', checkError.message)
+    } else {
+      const freshCounts: SlotCounts = {}
+      for (const row of (freshData ?? []) as { slot_time: string; slot_count: number }[]) {
+        freshCounts[row.slot_time] = row.slot_count
+      }
+      setSlotCounts(freshCounts)
 
-    const freshCounts: SlotCounts = {}
-    for (const row of (freshData ?? []) as { slot_time: string; slot_count: number }[]) {
-      freshCounts[row.slot_time] = row.slot_count
-    }
-    setSlotCounts(freshCounts)
-
-    if ((freshCounts[time] ?? 0) >= MAX_PER_SLOT) {
-      setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot is helaas volgeboekt. Kies een ander tijdslot.' }))
-      setTime('')
-      return
+      if ((freshCounts[time] ?? 0) >= MAX_PER_SLOT) {
+        setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot is helaas volgeboekt. Kies een ander tijdslot.' }))
+        setTime('')
+        setSubmitting(false)
+        return
+      }
     }
 
     setSubmitting(true)
@@ -134,7 +135,8 @@ const ReservationPage = () => {
 
     if (insertError) {
       setSubmitting(false)
-      setGeneralError('Uw reservering kon niet worden opgeslagen. Probeer het opnieuw.')
+      setGeneralError(`Uw reservering kon niet worden opgeslagen. (${insertError.code}: ${insertError.message})`)
+      console.error('Insert fout:', insertError)
       return
     }
 
