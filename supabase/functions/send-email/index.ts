@@ -129,7 +129,7 @@ Deno.serve(async (req: Request) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Den Witten Haen <noreply@denwittenhaen.nl>',
+      from: Deno.env.get('RESEND_FROM_EMAIL') ?? 'Den Witten Haen <onboarding@resend.dev>',
       to: [email],
       subject,
       html,
