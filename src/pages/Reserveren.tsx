@@ -122,31 +122,20 @@ const ReservationPage = () => {
 
     setSubmitting(true)
 
-    const { data: insertedRows, error: insertError } = await supabase
-      .from('reservations')
-      .insert({
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        date,
-        time,
-        guests: parseInt(guests, 10),
-        message: message.trim() || null,
-        status: 'aangevraagd',
-      })
-      .select()
+    const { data: newId, error: insertError } = await supabase.rpc('create_reservation', {
+      p_name: name.trim(),
+      p_email: email.trim(),
+      p_phone: phone.trim(),
+      p_date: date,
+      p_time: time,
+      p_guests: parseInt(guests, 10),
+      p_message: message.trim() || null,
+    })
 
-    if (insertError) {
+    if (insertError || !newId) {
       setSubmitting(false)
-      setGeneralError(`Uw reservering kon niet worden opgeslagen. (${insertError.code}: ${insertError.message})`)
+      setGeneralError(`Uw reservering kon niet worden opgeslagen. (${insertError?.code}: ${insertError?.message})`)
       console.error('Insert fout:', insertError)
-      return
-    }
-
-    if (!insertedRows || insertedRows.length === 0) {
-      setSubmitting(false)
-      setGeneralError('Uw reservering kon niet worden opgeslagen. Controleer of de database-policies correct zijn ingesteld (RLS anon_insert).')
-      console.error('Insert stil mislukt: geen rij teruggekomen. Controleer RLS policies in Supabase.')
       return
     }
 
