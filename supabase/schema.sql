@@ -31,3 +31,20 @@ create policy "auth_update" on reservations
 
 -- Enable realtime updates for the dashboard
 alter publication supabase_realtime add table reservations;
+
+-- RPC: slot counts for the public reservation form
+-- Uses security definer so anon users get only counts, never personal data.
+create or replace function public.get_slot_counts(check_date date)
+returns table(slot_time text, slot_count bigint)
+language sql
+security definer
+set search_path = public
+as $$
+  select time as slot_time, count(*)::bigint as slot_count
+  from reservations
+  where date = check_date
+    and status != 'geannuleerd'
+  group by time;
+$$;
+
+grant execute on function public.get_slot_counts(date) to anon;
