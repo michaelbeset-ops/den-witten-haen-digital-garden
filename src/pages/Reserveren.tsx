@@ -50,7 +50,7 @@ const ReservationPage = () => {
   const [generalError, setGeneralError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
-  // Fetch slot availability when date changes
+  // Fetch slot availability via RPC (anon-safe: returns counts only, no personal data)
   useEffect(() => {
     if (!date) {
       setSlotCounts({})
@@ -58,9 +58,7 @@ const ReservationPage = () => {
     }
     setLoadingSlots(true)
     supabase
-      .from('reservations')
-      .select('time')
-      .eq('date', date)
+      .rpc('get_slot_counts', { check_date: date })
       .then(({ data, error }) => {
         setLoadingSlots(false)
         if (error) {
@@ -68,12 +66,11 @@ const ReservationPage = () => {
           return
         }
         const counts: SlotCounts = {}
-        for (const row of data ?? []) {
-          const t = row.time as string
-          counts[t] = (counts[t] ?? 0) + 1
+        for (const row of (data ?? []) as { slot_time: string; slot_count: number }[]) {
+          counts[row.slot_time] = row.slot_count
         }
         setSlotCounts(counts)
-        // Reset time if selected slot is now full
+        // Reset time if selected slot became full
         if (time && (counts[time] ?? 0) >= MAX_PER_SLOT) {
           setTime('')
         }
@@ -103,9 +100,7 @@ const ReservationPage = () => {
 
     // Double-check slot availability (race condition guard)
     const { data: freshData, error: checkError } = await supabase
-      .from('reservations')
-      .select('time')
-      .eq('date', date)
+      .rpc('get_slot_counts', { check_date: date })
 
     if (checkError) {
       setGeneralError('Er is een fout opgetreden. Probeer het opnieuw.')
@@ -113,9 +108,8 @@ const ReservationPage = () => {
     }
 
     const freshCounts: SlotCounts = {}
-    for (const row of freshData ?? []) {
-      const t = row.time as string
-      freshCounts[t] = (freshCounts[t] ?? 0) + 1
+    for (const row of (freshData ?? []) as { slot_time: string; slot_count: number }[]) {
+      freshCounts[row.slot_time] = row.slot_count
     }
     setSlotCounts(freshCounts)
 
