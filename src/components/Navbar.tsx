@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,15 @@ const allLinks = [...leftLinks, ...rightLinks];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleNavClick = (to: string) => {
     setOpen(false);
@@ -32,8 +40,12 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 h-20 flex items-center justify-between md:justify-center relative">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? "bg-background/95 backdrop-blur-sm border-b border-border shadow-sm"
+        : "bg-transparent border-b border-transparent"
+    }`}>
+      <div className="container mx-auto px-4 h-24 flex items-center justify-between md:justify-center relative">
 
         {/* Desktop: left links */}
         <div className="hidden md:flex items-center gap-5 absolute left-4 lg:left-8">
@@ -42,7 +54,11 @@ const Navbar = () => {
               key={link.to}
               to={link.to}
               onClick={() => handleNavClick(link.to)}
-              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+              className={`text-sm font-sans transition-colors whitespace-nowrap ${
+                scrolled
+                  ? "text-muted-foreground hover:text-foreground"
+                  : "text-primary-foreground/80 hover:text-primary-foreground"
+              }`}
             >
               {link.label}
             </Link>
@@ -52,7 +68,9 @@ const Navbar = () => {
         {/* Center logo */}
         <Link
           to="/"
-          className="font-serif text-xl md:text-2xl font-bold text-foreground tracking-wide text-center"
+          className={`font-serif text-2xl md:text-4xl font-bold tracking-wide text-center transition-colors ${
+            scrolled ? "text-foreground" : "text-primary-foreground"
+          }`}
         >
           Den Witten Haen
         </Link>
@@ -64,7 +82,11 @@ const Navbar = () => {
               key={link.to}
               to={link.to}
               onClick={() => handleNavClick(link.to)}
-              className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+              className={`text-sm font-sans transition-colors whitespace-nowrap ${
+                scrolled
+                  ? "text-muted-foreground hover:text-foreground"
+                  : "text-primary-foreground/80 hover:text-primary-foreground"
+              }`}
             >
               {link.label}
             </Link>
@@ -74,11 +96,13 @@ const Navbar = () => {
         {/* Mobile: reserve + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
           <Link to="/reserveren">
-            <Button size="sm" variant="hero">Reserveren</Button>
+            <Button size="sm" variant={scrolled ? "hero" : "heroOutline"} className={!scrolled ? "border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-foreground" : ""}>
+              Reserveren
+            </Button>
           </Link>
           <button
             onClick={() => setOpen(!open)}
-            className="p-2 text-foreground"
+            className={`p-2 transition-colors ${scrolled ? "text-foreground" : "text-primary-foreground"}`}
             aria-label="Menu openen"
           >
             {open ? <X size={24} /> : <Menu size={24} />}
