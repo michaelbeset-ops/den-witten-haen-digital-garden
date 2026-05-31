@@ -20,7 +20,7 @@ const TIME_SLOTS = [
 
 const MAX_GUESTS_PER_SLOT = 48
 const MAX_GUESTS_PER_RESERVATION = 8
-const PHONE_NUMBER = '078 – 000 00 00' // ← vervang door het echte nummer
+const PHONE_NUMBER = '078 611 20 50'
 
 const tomorrowStr = (): string => {
   const d = new Date()
