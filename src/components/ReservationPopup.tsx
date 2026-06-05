@@ -16,10 +16,16 @@ import { sendConfirmationEmail } from '@/lib/email'
 
 const TIME_SLOTS = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
+  '12:30', '13:00', '13:30', '14:00',
 ]
-const MAX_PER_SLOT = 8
-const todayStr = () => new Date().toISOString().split('T')[0]
+const MAX_GUESTS_PER_SLOT = 48
+const MAX_GUESTS_PER_RESERVATION = 8
+const PHONE_NUMBER = '078 611 20 50'
+const tomorrowStr = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().split('T')[0]
+}
 type SlotCounts = Record<string, number>
 
 const ReservationPopup = () => {
@@ -61,7 +67,7 @@ const ReservationPopup = () => {
         counts[row.slot_time] = row.slot_count
       }
       setSlotCounts(counts)
-      if (time && (counts[time] ?? 0) >= MAX_PER_SLOT) setTime('')
+      if (time && (counts[time] ?? 0) >= MAX_GUESTS_PER_SLOT) setTime('')
     })
   }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -80,6 +86,11 @@ const ReservationPopup = () => {
       setError('Vul alle verplichte velden in.')
       return
     }
+    const guestsNum = parseInt(guests, 10)
+    if (guestsNum > MAX_GUESTS_PER_RESERVATION) {
+      setError(`Voor groepen van meer dan ${MAX_GUESTS_PER_RESERVATION} personen kunt u niet online reserveren — bel ons op ${PHONE_NUMBER}.`)
+      return
+    }
     setSubmitting(true)
     const { data: newId, error: rpcError } = await supabase.rpc('create_reservation', {
       p_name: name.trim(),
@@ -92,7 +103,11 @@ const ReservationPopup = () => {
     })
     setSubmitting(false)
     if (rpcError || !newId) {
-      setError(`Kon niet opslaan. (${rpcError?.code}: ${rpcError?.message})`)
+      if (rpcError?.code === 'P0001') {
+        setError('Dit tijdslot heeft niet genoeg ruimte meer voor uw gezelschap. Kies een ander tijdslot.')
+      } else {
+        setError(`Kon niet opslaan. (${rpcError?.code}: ${rpcError?.message})`)
+      }
       return
     }
     sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: parseInt(guests, 10) })
@@ -186,7 +201,7 @@ const ReservationPopup = () => {
                         id="pop-date"
                         type="date"
                         value={date}
-                        min={todayStr()}
+                        min={tomorrowStr()}
                         onChange={e => { setDate(e.target.value); setTime('') }}
                       />
                     </div>
@@ -197,9 +212,14 @@ const ReservationPopup = () => {
                         type="number"
                         value={guests}
                         onChange={e => setGuests(e.target.value)}
-                        min={1} max={30}
+                        min={1} max={20}
                         placeholder="Aantal"
                       />
+                      {parseInt(guests, 10) > MAX_GUESTS_PER_RESERVATION && (
+                        <p className="mt-1 text-xs text-destructive font-sans">
+                          Bel ons op {PHONE_NUMBER} voor grote groepen.
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -210,7 +230,7 @@ const ReservationPopup = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {TIME_SLOTS.map(slot => {
-                          const full = (slotCounts[slot] ?? 0) >= MAX_PER_SLOT
+                          const full = (slotCounts[slot] ?? 0) >= MAX_GUESTS_PER_SLOT
                           return (
                             <SelectItem key={slot} value={slot} disabled={full}>
                               {slot}{full ? ' (Volgeboekt)' : ''}

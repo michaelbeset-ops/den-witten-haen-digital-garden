@@ -15,12 +15,18 @@ import { sendConfirmationEmail } from '@/lib/email'
 
 const TIME_SLOTS = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
+  '12:30', '13:00', '13:30', '14:00',
 ]
 
-const MAX_PER_SLOT = 8
+const MAX_GUESTS_PER_SLOT = 48
+const MAX_GUESTS_PER_RESERVATION = 8
+const PHONE_NUMBER = '078 611 20 50'
 
-const todayStr = (): string => new Date().toISOString().split('T')[0]
+const tomorrowStr = (): string => {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().split('T')[0]
+}
 
 type SlotCounts = Record<string, number>
 
@@ -71,7 +77,7 @@ const ReservationPage = () => {
         }
         setSlotCounts(counts)
         // Reset time if selected slot became full
-        if (time && (counts[time] ?? 0) >= MAX_PER_SLOT) {
+        if (time && (counts[time] ?? 0) >= MAX_GUESTS_PER_SLOT) {
           setTime('')
         }
       })
@@ -87,7 +93,8 @@ const ReservationPage = () => {
     if (!time) errors.time = 'Tijdslot is verplicht.'
     const guestsNum = parseInt(guests, 10)
     if (!guests) errors.guests = 'Aantal personen is verplicht.'
-    else if (isNaN(guestsNum) || guestsNum < 1 || guestsNum > 30) errors.guests = 'Voer een geldig aantal in (1–30).'
+    else if (isNaN(guestsNum) || guestsNum < 1) errors.guests = 'Voer een geldig aantal in.'
+    else if (guestsNum > MAX_GUESTS_PER_RESERVATION) errors.guests = `Voor groepen van meer dan ${MAX_GUESTS_PER_RESERVATION} personen kunt u niet online reserveren — bel ons op ${PHONE_NUMBER}.`
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -112,8 +119,9 @@ const ReservationPage = () => {
       }
       setSlotCounts(freshCounts)
 
-      if ((freshCounts[time] ?? 0) >= MAX_PER_SLOT) {
-        setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot is helaas volgeboekt. Kies een ander tijdslot.' }))
+      const requestedGuests = parseInt(guests, 10)
+      if ((freshCounts[time] ?? 0) + requestedGuests > MAX_GUESTS_PER_SLOT) {
+        setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot heeft niet genoeg ruimte meer voor uw gezelschap. Kies een ander tijdslot.' }))
         setTime('')
         setSubmitting(false)
         return
@@ -134,7 +142,11 @@ const ReservationPage = () => {
 
     if (insertError || !newId) {
       setSubmitting(false)
-      setGeneralError(`Uw reservering kon niet worden opgeslagen. (${insertError?.code}: ${insertError?.message})`)
+      if (insertError?.code === 'P0001') {
+        setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot heeft niet genoeg ruimte meer voor uw gezelschap. Kies een ander tijdslot.' }))
+      } else {
+        setGeneralError(`Uw reservering kon niet worden opgeslagen. (${insertError?.code}: ${insertError?.message})`)
+      }
       console.error('Insert fout:', insertError)
       return
     }
@@ -254,7 +266,7 @@ const ReservationPage = () => {
                 id="date"
                 type="date"
                 value={date}
-                min={todayStr()}
+                min={tomorrowStr()}
                 onChange={(e) => {
                   setDate(e.target.value)
                   setTime('')
@@ -280,7 +292,7 @@ const ReservationPage = () => {
                 <SelectContent>
                   {TIME_SLOTS.map((slot) => {
                     const count = slotCounts[slot] ?? 0
-                    const full = count >= MAX_PER_SLOT
+                    const full = count >= MAX_GUESTS_PER_SLOT
                     return (
                       <SelectItem key={slot} value={slot} disabled={full}>
                         {slot}{full ? ' (Volgeboekt)' : ''}
@@ -306,12 +318,17 @@ const ReservationPage = () => {
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
                 min={1}
-                max={30}
+                max={20}
                 placeholder="Aantal"
                 aria-invalid={!!fieldErrors.guests}
               />
-              {fieldErrors.guests && (
+              {fieldErrors.guests ? (
                 <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.guests}</p>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground font-sans">
+                  Voor meer dan {MAX_GUESTS_PER_RESERVATION} personen? Bel ons op{' '}
+                  <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
+                </p>
               )}
             </div>
 
