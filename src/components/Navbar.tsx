@@ -39,9 +39,12 @@ const Navbar = () => {
     }
   };
 
+  const isHome = location.pathname === "/";
+  const solid = !isHome || scrolled;
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled
+      solid
         ? "bg-background/95 backdrop-blur-sm border-b border-border shadow-sm"
         : "bg-transparent border-b border-transparent"
     }`}>
@@ -55,7 +58,7 @@ const Navbar = () => {
               to={link.to}
               onClick={() => handleNavClick(link.to)}
               className={`text-sm font-sans transition-colors whitespace-nowrap ${
-                scrolled
+                solid
                   ? "text-muted-foreground hover:text-foreground"
                   : "text-primary-foreground/80 hover:text-primary-foreground"
               }`}
@@ -69,7 +72,7 @@ const Navbar = () => {
         <Link
           to="/"
           className={`font-serif text-2xl md:text-4xl font-bold tracking-wide text-center transition-colors ${
-            scrolled ? "text-foreground" : "text-primary-foreground"
+            solid ? "text-foreground" : "text-primary-foreground"
           }`}
         >
           Den Witten Haen
@@ -83,7 +86,7 @@ const Navbar = () => {
               to={link.to}
               onClick={() => handleNavClick(link.to)}
               className={`text-sm font-sans transition-colors whitespace-nowrap ${
-                scrolled
+                solid
                   ? "text-muted-foreground hover:text-foreground"
                   : "text-primary-foreground/80 hover:text-primary-foreground"
               }`}
@@ -96,13 +99,13 @@ const Navbar = () => {
         {/* Mobile: reserve + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
           <Link to="/reserveren">
-            <Button size="sm" variant={scrolled ? "hero" : "heroOutline"} className={!scrolled ? "border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-foreground" : ""}>
+            <Button size="sm" variant={solid ? "hero" : "heroOutline"} className={!solid ? "border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-foreground" : ""}>
               Reserveren
             </Button>
           </Link>
           <button
             onClick={() => setOpen(!open)}
-            className={`p-2 transition-colors ${scrolled ? "text-foreground" : "text-primary-foreground"}`}
+            className={`p-2 transition-colors ${solid ? "text-foreground" : "text-primary-foreground"}`}
             aria-label="Menu openen"
           >
             {open ? <X size={24} /> : <Menu size={24} />}
