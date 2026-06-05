@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Landmark, TreePine, Heart, Star, ChevronRight, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/hero-interior.png";
-import gardenImage from "@/assets/garden.jpg";
+import gardenImage from "@/assets/garden-tuin.png";
 import teamImage from "@/assets/team.png";
 
 const specialties = [
@@ -207,7 +207,7 @@ const Index = () => {
           <div className="rounded-lg overflow-hidden shadow-lg">
             <img
               src={gardenImage}
-              alt="De verborgen stadstuin van Den Witten Haen"
+              alt="De tuin van Den Witten Haen"
               className="w-full h-80 object-cover"
               loading="lazy"
               width={800}
