@@ -1,4 +1,5 @@
 import { Heart } from "lucide-react";
+import teamImage from "@/assets/team.png";
 
 const teamMembers = [
   { name: "Het Keukenteam", role: "Onze koks", desc: "Met verse ingrediënten en veel liefde bereiden zij dagelijks de lekkerste gerechten." },
@@ -16,6 +17,10 @@ const TeamPage = () => (
         Samen met onze begeleiders vormen zij een hecht team dat gastvrijheid op de eerste plaats zet. 
         Iedereen draagt op zijn eigen manier bij aan de warme sfeer.
       </p>
+
+      <div className="mb-12 rounded-xl overflow-hidden border border-border shadow-sm">
+        <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-72 object-cover" />
+      </div>
 
       <div className="space-y-6 mb-12">
         {teamMembers.map((member) => (
