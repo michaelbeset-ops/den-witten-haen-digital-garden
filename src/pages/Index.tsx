@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Landmark, TreePine, Heart, Star, ChevronRight, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import heroImage from "@/assets/hero-interior.jpg";
+import heroImage from "@/assets/hero-interior.png";
 import gardenImage from "@/assets/garden.jpg";
 
 const specialties = [
