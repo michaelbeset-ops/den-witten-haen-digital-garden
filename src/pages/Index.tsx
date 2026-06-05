@@ -71,10 +71,10 @@ const Index = () => {
       </section>
 
       {/* USPs */}
-      <section className="py-14 bg-card">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="py-14 bg-card overflow-hidden">
+        <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-8 px-6 pb-2 md:grid md:grid-cols-3 md:overflow-visible md:container md:mx-auto md:px-4 md:pb-0">
           {usps.map((usp) => (
-            <div key={usp.title} className="text-center">
+            <div key={usp.title} className="text-center shrink-0 w-64 snap-center md:w-auto md:shrink">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
                 <usp.icon className="w-6 h-6 text-primary" />
               </div>
@@ -122,7 +122,7 @@ const Index = () => {
       </section>
 
       {/* Ons Team */}
-      <section className="py-20 bg-card">
+      <section className="pt-20 pb-10 bg-card">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center mb-10">
             <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
@@ -146,7 +146,7 @@ const Index = () => {
       </section>
 
       {/* Over Den Witten Haen – kort + tabs */}
-      <section id="over-ons" className="py-20">
+      <section id="over-ons" className="pt-10 pb-20">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Ons verhaal</p>
