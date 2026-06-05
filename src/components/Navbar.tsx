@@ -71,6 +71,7 @@ const Navbar = () => {
         {/* Center logo */}
         <Link
           to="/"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className={`font-serif text-2xl md:text-4xl font-bold tracking-wide text-center transition-colors ${
             solid ? "text-foreground" : "text-primary-foreground"
           }`}
