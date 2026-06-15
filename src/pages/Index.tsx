@@ -7,21 +7,26 @@ import gardenImage from "@/assets/garden-tuin.png";
 import teamImage from "@/assets/team.png";
 
 const specialties = [
-  { name: "Clubsandwich", desc: "Kip, bacon, sla, tomaat & ei", tag: "Populair" },
-  { name: "High Tea Klassiek", desc: "Zoet & hartig assortiment met thee", tag: "Aanrader" },
-  { name: "Quiche du Jour", desc: "Dagverse quiche met salade", tag: "Huisgemaakt" },
-  { name: "Tomatensoep", desc: "Huisgemaakt met balletjes", tag: "Klassieker" },
-  { name: "Broodje Carpaccio", desc: "Rucola, parmezaan, truffelmayo", tag: "Favoriet" },
-  { name: "Huislimonade", desc: "Seizoensgebonden smaak", tag: "Verfrissend" },
-  { name: "High Tea Deluxe", desc: "Uitgebreid, met prosecco", tag: "Premium" },
+  { name: "Flammkuchen", desc: "Spek · roomkaas · mozzarella · rode ui", tag: "Populair" },
+  { name: "High Tea", desc: "Zoete & hartige lekkernijen, scones & thee", tag: "Aanrader" },
+  { name: "Club Sandwich", desc: "Spek · kip · ei · sriracha mayo", tag: "Favoriet" },
+  { name: "Tosti van Gogh", desc: "Brie · walnoten · honing", tag: "Vega" },
+  { name: "Tonijn Salade", desc: "Sla · cherry tomaat · ei · olijf · vinaigrette", tag: "Vers" },
+  { name: "Soep van de dag", desc: "Vraag naar ons aanbod van de dag", tag: "Huisgemaakt" },
+  { name: "Uitsmijter Den Witten Haen", desc: "Bruin brood · 3 eieren · ham, kaas of spek", tag: "Klassiek" },
 ];
 
 const reviews = [
-  { quote: "Verse ingrediënten, lekkere gerechten en zeer vriendelijke mensen.", name: "Stephan D." },
-  { quote: "Per toeval kwamen we hier. Wat een cadeautje deze plek.", name: "Annemarieke" },
-  { quote: "Heerlijke plek voor lunch of high tea. Geweldig!", name: "Elvy B." },
-  { quote: "Fijne en ongedwongen plek waar je je welkom voelt.", name: "Robert S." },
-  { quote: "Babyshower met 17 mensen. Wauw, zo goed geregeld.", name: "An R." },
+  { quote: "Wij hadden een baby shower met 17 mensen. Wauw het was zoo goed geregeld. Een aparte ruimte, authentiek zaaltje, erg mooi aangekleed.", name: "An Rijswijk", stars: 5 },
+  { quote: "Verse ingrediënten, lekkere gerechten en zeer vriendelijke mensen vind je in dit Sociaal restaurant.", name: "Stephan Dijkstra", stars: 5 },
+  { quote: "Per toeval kwamen we hier tijdens ons zussendagje. En wat een cadeautje deze plek. Personeel is top en ook de gerechten en heerlijke cappuccino.", name: "Annemarieke", stars: 5 },
+  { quote: "Fijne en ongedwongen plek waar je je welkom voelt. Gewoon lekker eten, veel variatie op de lunchkaart in hartje binnenstad.", name: "Robert Snel", stars: 5 },
+  { quote: "Heerlijke plek voor lunch of high tea.", name: "Elvy Barbar", stars: 5 },
+  { quote: "Fijne locatie om te vergaderen en lunchen. Mooie toegevoegde waarde is het personeel!", name: "Edwin Buwalda", stars: 5 },
+  { quote: "Hier heerlijk gegeten. Mooie tuin/terras. Binnen is er een prachtig interieur.", name: "Virginia Freeth", stars: 4 },
+  { quote: "Ik ga hier regelmatig eten. Het eten is echt heerlijk, ben verkocht!", name: "Angelique Van der Schulp", stars: 5 },
+  { quote: "We hebben een leuk feest gegeven in één van de mooie zalen. De vegetarische hapjes waren heerlijk en de bediening was voortreffelijk.", name: "Wytske de Haan", stars: 5 },
+  { quote: "Vanmiddag een high tea afgehaald voor 5 personen waarvan 1 glutenvrij. Vers, lekker en ook de glutenvrije hapjes waren gevarieerd. Erg genoten!", name: "Y. Worms", stars: 5 },
 ];
 
 const team = [
@@ -226,7 +231,7 @@ const Index = () => {
               <div key={i} className="shrink-0 w-72 flex flex-col gap-2">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="w-3 h-3 fill-primary text-primary" />
+                    <Star key={j} className={`w-3 h-3 ${j < r.stars ? 'fill-primary text-primary' : 'fill-muted text-muted'}`} />
                   ))}
                 </div>
                 <p className="text-muted-foreground font-sans text-xs italic leading-relaxed">"{r.quote}"</p>
