@@ -46,8 +46,12 @@ const Footer = () => (
       </div>
     </div>
 
-    <div className="border-t border-primary-foreground/10 text-center py-4 text-xs opacity-50">
-      © {new Date().getFullYear()} Den Witten Haen. Alle rechten voorbehouden.
+    <div className="border-t border-primary-foreground/10 text-center py-4 text-xs opacity-50 flex flex-col sm:flex-row items-center justify-center gap-2">
+      <span>© {new Date().getFullYear()} Den Witten Haen. Alle rechten voorbehouden.</span>
+      <span className="hidden sm:inline">·</span>
+      <a href="https://sitefront.nl" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+        Powered by Sitefront
+      </a>
     </div>
   </footer>
 );

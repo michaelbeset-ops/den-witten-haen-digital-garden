@@ -7,13 +7,13 @@ import gardenImage from "@/assets/garden-tuin.png";
 import teamImage from "@/assets/team.png";
 
 const specialties = [
-  { name: "Clubsandwich", desc: "Kip, bacon, sla, tomaat & ei", tag: "Populair" },
-  { name: "High Tea Klassiek", desc: "Zoet & hartig assortiment met thee", tag: "Aanrader" },
-  { name: "Quiche du Jour", desc: "Dagverse quiche met salade", tag: "Huisgemaakt" },
-  { name: "Tomatensoep", desc: "Huisgemaakt met balletjes", tag: "Klassieker" },
-  { name: "Broodje Carpaccio", desc: "Rucola, parmezaan, truffelmayo", tag: "Favoriet" },
-  { name: "Huislimonade", desc: "Seizoensgebonden smaak", tag: "Verfrissend" },
-  { name: "High Tea Deluxe", desc: "Uitgebreid, met prosecco", tag: "Premium" },
+  { name: "Flammkuchen", desc: "Spek · roomkaas · mozzarella · rode ui", tag: "Populair" },
+  { name: "High Tea", desc: "Zoete & hartige lekkernijen, scones & thee", tag: "Aanrader" },
+  { name: "Club Sandwich", desc: "Spek · kip · ei · sriracha mayo", tag: "Favoriet" },
+  { name: "Tosti van Gogh", desc: "Brie · walnoten · honing", tag: "Vega" },
+  { name: "Tonijn Salade", desc: "Sla · cherry tomaat · ei · olijf · vinaigrette", tag: "Vers" },
+  { name: "Soep van de dag", desc: "Vraag naar ons aanbod van de dag", tag: "Huisgemaakt" },
+  { name: "Uitsmijter Den Witten Haen", desc: "Bruin brood · 3 eieren · ham, kaas of spek", tag: "Klassiek" },
 ];
 
 const reviews = [
