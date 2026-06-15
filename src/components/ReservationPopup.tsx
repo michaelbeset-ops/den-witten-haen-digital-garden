@@ -14,10 +14,21 @@ import {
 import { supabase } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 
-const TIME_SLOTS = [
+const SLOTS_MON_WED = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00',
+  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
 ]
+const SLOTS_THU_SAT = [
+  '10:00', '10:30', '11:00', '11:30', '12:00',
+  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
+]
+function getSlotsForDate(dateStr: string): string[] {
+  if (!dateStr) return SLOTS_MON_WED
+  const day = new Date(dateStr + 'T12:00:00').getDay()
+  if (day === 0) return []
+  if (day >= 4) return SLOTS_THU_SAT
+  return SLOTS_MON_WED
+}
 const MAX_GUESTS_PER_SLOT = 48
 const MAX_GUESTS_PER_RESERVATION = 8
 const PHONE_NUMBER = '078 611 20 50'
@@ -229,14 +240,17 @@ const ReservationPopup = () => {
                         <SelectValue placeholder={loadingSlots ? 'Laden...' : !date ? 'Kies eerst een datum' : 'Kies een tijdslot'} />
                       </SelectTrigger>
                       <SelectContent>
-                        {TIME_SLOTS.map(slot => {
-                          const full = (slotCounts[slot] ?? 0) >= MAX_GUESTS_PER_SLOT
-                          return (
-                            <SelectItem key={slot} value={slot} disabled={full}>
-                              {slot}{full ? ' (Volgeboekt)' : ''}
-                            </SelectItem>
-                          )
-                        })}
+                        {getSlotsForDate(date).length === 0
+                          ? <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
+                          : getSlotsForDate(date).map(slot => {
+                              const full = (slotCounts[slot] ?? 0) >= MAX_GUESTS_PER_SLOT
+                              return (
+                                <SelectItem key={slot} value={slot} disabled={full}>
+                                  {slot}{full ? ' (Volgeboekt)' : ''}
+                                </SelectItem>
+                              )
+                            })
+                        }
                       </SelectContent>
                     </Select>
                   </div>

@@ -13,10 +13,22 @@ import {
 import { supabase } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 
-const TIME_SLOTS = [
+const SLOTS_MON_WED = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00',
+  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
 ]
+const SLOTS_THU_SAT = [
+  '10:00', '10:30', '11:00', '11:30', '12:00',
+  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
+]
+
+function getSlotsForDate(dateStr: string): string[] {
+  if (!dateStr) return SLOTS_MON_WED
+  const day = new Date(dateStr + 'T12:00:00').getDay() // 0=zo, 1=ma … 6=za
+  if (day === 0) return [] // zondag gesloten
+  if (day >= 4) return SLOTS_THU_SAT // do t/m za
+  return SLOTS_MON_WED // ma t/m wo
+}
 
 const MAX_GUESTS_PER_SLOT = 48
 const MAX_GUESTS_PER_RESERVATION = 8
@@ -290,7 +302,9 @@ const ReservationPage = () => {
                   <SelectValue placeholder={loadingSlots ? 'Beschikbaarheid laden...' : 'Kies een tijdslot'} />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIME_SLOTS.map((slot) => {
+                  {getSlotsForDate(date).length === 0 ? (
+                    <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
+                  ) : getSlotsForDate(date).map((slot) => {
                     const count = slotCounts[slot] ?? 0
                     const full = count >= MAX_GUESTS_PER_SLOT
                     return (
@@ -303,6 +317,9 @@ const ReservationPage = () => {
               </Select>
               {!date && (
                 <p className="mt-1 text-xs text-muted-foreground font-sans">Kies eerst een datum.</p>
+              )}
+              {date && getSlotsForDate(date).length === 0 && (
+                <p className="mt-1 text-xs text-destructive font-sans">Op zondag zijn wij gesloten.</p>
               )}
               {fieldErrors.time && (
                 <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.time}</p>
