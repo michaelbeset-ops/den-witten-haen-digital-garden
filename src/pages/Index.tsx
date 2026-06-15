@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Landmark, TreePine, Heart, Star, ChevronRight, ArrowRight } from "lucide-react";
-import { useState } from "react";
+
 import heroImage from "@/assets/hero-interior.png";
 import gardenImage from "@/assets/garden-tuin.png";
 import teamImage from "@/assets/team.png";
@@ -40,7 +40,7 @@ const usps = [
 ];
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"kort" | "meer">("kort");
+
 
   return (
     <main>
@@ -150,64 +150,32 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Over Den Witten Haen – kort + tabs */}
+      {/* Over Den Witten Haen */}
       <section id="over-ons" className="pt-10 pb-20">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Ons verhaal</p>
             <h2 className="font-serif text-3xl md:text-4xl mb-6">Over Den Witten Haen</h2>
-
-            {/* Tabs */}
-            <div className="flex gap-1 mb-6 border-b border-border">
-              <button
-                onClick={() => setActiveTab("kort")}
-                className={`px-4 py-2 text-sm font-sans transition-colors border-b-2 -mb-px ${
-                  activeTab === "kort"
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                In het kort
-              </button>
-              <button
-                onClick={() => setActiveTab("meer")}
-                className={`px-4 py-2 text-sm font-sans transition-colors border-b-2 -mb-px ${
-                  activeTab === "meer"
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Lees meer
-              </button>
-            </div>
-
-            {activeTab === "kort" ? (
-              <p className="text-muted-foreground font-sans leading-relaxed">
-                Den Witten Haen is een lunchroom in een monumentaal pand in het centrum van Dordrecht, 
-                met een verborgen stadstuin en een warm, inclusief team.
+            <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
+              <p>
+                In het historische centrum van Dordrecht, verscholen achter eeuwenoude gevels,
+                ligt Den Witten Haen — een lunchroom met een bijzonder verhaal. Ons monumentale
+                pand herbergt niet alleen een prachtig interieur, maar ook een verborgen stadstuin
+                waar u in alle rust kunt genieten. De oudste beuk van Dordrecht is zelfs zichtbaar
+                vanuit onze binnentuin.
               </p>
-            ) : (
-              <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
-                <p>
-                  In het historische centrum van Dordrecht, verscholen achter eeuwenoude gevels, 
-                  ligt Den Witten Haen — een lunchroom met een bijzonder verhaal. Ons monumentale 
-                  pand herbergt niet alleen een prachtig interieur, maar ook een verborgen stadstuin 
-                  waar u in alle rust kunt genieten. De oudste beuk van Dordrecht is zelfs zichtbaar 
-                  vanuit onze binnentuin.
-                </p>
-                <p>
-                  Bij ons werken mensen met een beperking met hart en ziel aan uw ervaring. 
-                  Dat maakt Den Witten Haen niet alleen een plek om te eten, maar een plek om u 
-                  thuis te voelen. Wij geloven dat gastvrijheid het mooiste is wanneer het van 
-                  binnenuit komt.
-                </p>
-                <p>
-                  Den Witten Haen is onderdeel van Philadelphia, een organisatie die mensen met een 
-                  beperking ondersteunt om het beste uit zichzelf te halen. Samen creëren wij een 
-                  plek waar iedereen welkom is.
-                </p>
-              </div>
-            )}
+              <p>
+                Bij ons werken mensen met een beperking met hart en ziel aan uw ervaring.
+                Dat maakt Den Witten Haen niet alleen een plek om te eten, maar een plek om u
+                thuis te voelen. Wij geloven dat gastvrijheid het mooiste is wanneer het van
+                binnenuit komt.
+              </p>
+              <p>
+                Den Witten Haen is onderdeel van Philadelphia, een organisatie die mensen met een
+                beperking ondersteunt om het beste uit zichzelf te halen. Samen creëren wij een
+                plek waar iedereen welkom is.
+              </p>
+            </div>
           </div>
           <div className="rounded-lg overflow-hidden shadow-lg">
             <img
