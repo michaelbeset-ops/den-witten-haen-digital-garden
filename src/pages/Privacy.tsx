@@ -23,9 +23,9 @@ const PrivacyPage = () => (
       <Section id="verantwoordelijke" title="1. Verwerkingsverantwoordelijke">
         <p>
           Den Witten Haen<br />
-          Groenmarkt 1, 3311 BD Dordrecht<br />
-          E-mail: <a href="mailto:info@denwittenhaen.nl" className="underline underline-offset-2 hover:text-foreground transition-colors">info@denwittenhaen.nl</a><br />
-          Telefoon: <a href="tel:+31781234567" className="underline underline-offset-2 hover:text-foreground transition-colors">078 – 123 45 67</a>
+          Groenmarkt 19-B, 3311 BD Dordrecht<br />
+          E-mail: <a href="mailto:denwittenhaen@philadelphia.nl" className="underline underline-offset-2 hover:text-foreground transition-colors">denwittenhaen@philadelphia.nl</a><br />
+          Telefoon: <a href="tel:0786112050" className="underline underline-offset-2 hover:text-foreground transition-colors">078 611 2050</a>
         </p>
         <p>
           Heeft u vragen over dit beleid? Neem dan gerust contact met ons op via bovenstaande gegevens.
@@ -124,8 +124,8 @@ const PrivacyPage = () => (
         </ul>
         <p>
           Stuur uw verzoek naar{" "}
-          <a href="mailto:info@denwittenhaen.nl" className="underline underline-offset-2 hover:text-foreground transition-colors">
-            info@denwittenhaen.nl
+          <a href="mailto:denwittenhaen@philadelphia.nl" className="underline underline-offset-2 hover:text-foreground transition-colors">
+            denwittenhaen@philadelphia.nl
           </a>. Wij reageren binnen 30 dagen.
         </p>
       </Section>

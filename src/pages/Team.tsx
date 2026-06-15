@@ -43,7 +43,7 @@ const TeamPage = () => (
         <h3 className="font-serif text-xl mb-2 text-primary-foreground">Werken bij Den Witten Haen?</h3>
         <p className="text-sm text-primary-foreground/80 font-sans">
           Wij zijn altijd op zoek naar enthousiaste mensen. Neem contact met ons op via{' '}
-          <a href="mailto:info@denwittenhaen.nl" className="underline text-primary-foreground">info@denwittenhaen.nl</a>.
+          <a href="mailto:denwittenhaen@philadelphia.nl" className="underline text-primary-foreground">denwittenhaen@philadelphia.nl</a>.
         </p>
       </div>
     </div>

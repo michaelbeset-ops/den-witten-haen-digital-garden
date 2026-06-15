@@ -6,16 +6,17 @@ const Footer = () => (
     <div className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
       <div>
         <h3 className="font-serif text-lg mb-3">Den Witten Haen</h3>
-        <p className="text-sm opacity-80">Centrum Dordrecht</p>
-        <p className="text-sm opacity-80">Voorstraat 000, 3311 XX Dordrecht</p>
+        <p className="text-sm opacity-80">Groenmarkt 19-B</p>
+        <p className="text-sm opacity-80">3311 BD Dordrecht</p>
       </div>
       <div>
         <h3 className="font-serif text-lg mb-3">Contact</h3>
-        <p className="text-sm opacity-80">Tel: 078 – 000 00 00</p>
-        <p className="text-sm opacity-80">E-mail: info@denwittenhaen.nl</p>
+        <p className="text-sm opacity-80">Tel: <a href="tel:0786112050" className="hover:opacity-100">078 611 2050</a></p>
+        <p className="text-sm opacity-80">E-mail: <a href="mailto:denwittenhaen@philadelphia.nl" className="hover:opacity-100">denwittenhaen@philadelphia.nl</a></p>
         <div className="mt-3">
           <h4 className="text-sm font-semibold mb-1">Openingstijden</h4>
-          <p className="text-sm opacity-80">Ma t/m za: 10:00 – 17:00</p>
+          <p className="text-sm opacity-80">Ma t/m wo: 09:00 – 16:00</p>
+          <p className="text-sm opacity-80">Do t/m za: 10:00 – 17:00</p>
           <p className="text-sm opacity-80">Zo: gesloten</p>
         </div>
       </div>

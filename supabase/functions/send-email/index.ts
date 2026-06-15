@@ -39,11 +39,11 @@ const emailWrapper = (content: string) => `<!DOCTYPE html>
               <tr>
                 <td style="font-family:Georgia,serif;font-size:13px;color:#8a7060;line-height:1.9;">
                   <strong style="color:#2c1f0f;">Den Witten Haen</strong><br>
-                  Groenmarkt 19b, 3311 BD Dordrecht<br>
-                  <a href="mailto:info@denwittenhaen.nl" style="color:#5a7a5e;text-decoration:none;">info@denwittenhaen.nl</a>
+                  Groenmarkt 19-B, 3311 BD Dordrecht<br>
+                  <a href="mailto:denwittenhaen@philadelphia.nl" style="color:#5a7a5e;text-decoration:none;">denwittenhaen@philadelphia.nl</a>
                 </td>
                 <td align="right" style="font-family:Georgia,serif;font-size:12px;color:#b0a090;vertical-align:top;line-height:1.9;">
-                  Ma – Za<br>10:00 – 17:00
+                  Ma – Wo: 09:00 – 16:00<br>Do – Za: 10:00 – 17:00
                 </td>
               </tr>
             </table>
@@ -156,7 +156,7 @@ function buildCancellationHtml(name: string, date: string, time: string): string
 
     <p style="margin:0 0 48px 0;font-family:Georgia,serif;font-size:15px;color:#2c1f0f;line-height:1.9;">
       Heeft u vragen? Neem gerust contact op via
-      <a href="mailto:info@denwittenhaen.nl" style="color:#5a7a5e;text-decoration:none;">info@denwittenhaen.nl</a>.<br><br>
+      <a href="mailto:denwittenhaen@philadelphia.nl" style="color:#5a7a5e;text-decoration:none;">denwittenhaen@philadelphia.nl</a>.<br><br>
       Met vriendelijke groet,<br>
       <strong>Team Den Witten Haen</strong>
     </p>

@@ -214,10 +214,10 @@ const CookiePage = () => (
         <p>
           Heeft u vragen over ons cookiebeleid? Neem dan contact op via{" "}
           <a
-            href="mailto:info@denwittenhaen.nl"
+            href="mailto:denwittenhaen@philadelphia.nl"
             className="underline underline-offset-2 hover:text-foreground transition-colors"
           >
-            info@denwittenhaen.nl
+            denwittenhaen@philadelphia.nl
           </a>.
         </p>
       </Section>
