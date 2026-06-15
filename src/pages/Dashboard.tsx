@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, type Reservation } from '@/lib/supabase'
-import { sendConfirmationEmail, sendCancellationEmail } from '@/lib/email'
+import { sendCancellationEmail } from '@/lib/email'
 
 const todayStr = () => new Date().toISOString().split('T')[0]
 
@@ -12,7 +12,7 @@ const fmtDate = (iso: string) =>
     month: 'short',
   })
 
-type ActionLoading = Record<string, 'bevestigen' | 'annuleren' | null>
+type ActionLoading = Record<string, 'annuleren' | null>
 
 const StatusBadge = ({ status }: { status: Reservation['status'] }) => {
   const styles = {
@@ -72,18 +72,6 @@ const Dashboard = () => {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [fetchReservations])
-
-  const handleBevestigen = async (r: Reservation) => {
-    setActionLoading((prev) => ({ ...prev, [r.id]: 'bevestigen' }))
-    const { error } = await supabase.from('reservations').update({ status: 'bevestigd' }).eq('id', r.id)
-    if (!error) {
-      sendConfirmationEmail({ name: r.name, email: r.email, date: r.date, time: r.time, guests: r.guests })
-      setReservations((prev) => prev.map((item) => item.id === r.id ? { ...item, status: 'bevestigd' } : item))
-    } else {
-      console.error('Fout bij bevestigen:', error)
-    }
-    setActionLoading((prev) => ({ ...prev, [r.id]: null }))
-  }
 
   const handleAnnuleren = async (r: Reservation) => {
     setActionLoading((prev) => ({ ...prev, [r.id]: 'annuleren' }))
@@ -235,26 +223,15 @@ const Dashboard = () => {
                           <StatusBadge status={r.status} />
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {r.status === 'aangevraagd' && (
-                              <button
-                                onClick={() => handleBevestigen(r)}
-                                disabled={!!busy}
-                                className="text-xs font-sans font-medium px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                              >
-                                {busy === 'bevestigen' ? 'Bezig…' : 'Bevestigen'}
-                              </button>
-                            )}
-                            {r.status !== 'geannuleerd' && (
-                              <button
-                                onClick={() => handleAnnuleren(r)}
-                                disabled={!!busy}
-                                className="text-xs font-sans font-medium px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                              >
-                                {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
-                              </button>
-                            )}
-                          </div>
+                          {r.status !== 'geannuleerd' && (
+                            <button
+                              onClick={() => handleAnnuleren(r)}
+                              disabled={!!busy}
+                              className="text-xs font-sans font-medium px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                            >
+                              {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )

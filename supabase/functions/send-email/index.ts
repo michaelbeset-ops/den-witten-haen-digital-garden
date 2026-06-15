@@ -63,9 +63,9 @@ function buildConfirmationHtml(name: string, date: string, time: string, guests:
       <div style="display:inline-block;width:56px;height:56px;background:#eef3ee;border-radius:50%;line-height:56px;font-size:26px;text-align:center;">📅</div>
     </div>
 
-    <h2 style="margin:0 0 10px 0;font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#2c1f0f;text-align:center;">Bedankt, ${name}!</h2>
+    <h2 style="margin:0 0 10px 0;font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#2c1f0f;text-align:center;">Uw reservering is bevestigd!</h2>
     <p style="margin:0 0 32px 0;font-family:Georgia,serif;font-size:15px;color:#6b5c4c;text-align:center;line-height:1.8;">
-      Wij hebben uw reserveringsaanvraag ontvangen<br>en bevestigen deze zo snel mogelijk.
+      Bedankt voor uw reservering, ${name}.<br>We kijken ernaar uit u te verwelkomen.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6ef;border-radius:10px;border:1px solid #e8dfd0;margin-bottom:28px;">
@@ -99,18 +99,10 @@ function buildConfirmationHtml(name: string, date: string, time: string, guests:
       </tr>
     </table>
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
-      <tr>
-        <td style="background:#fdf9f4;border-left:3px solid #5a7a5e;padding:16px 20px;border-radius:0 6px 6px 0;">
-          <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#6b5c4c;line-height:1.8;">
-            U ontvangt een tweede e-mail zodra uw reservering officieel is bevestigd door ons team.
-          </p>
-        </td>
-      </tr>
-    </table>
-
     <p style="margin:0 0 48px 0;font-family:Georgia,serif;font-size:15px;color:#2c1f0f;line-height:1.9;">
-      We kijken uit naar uw bezoek!<br><br>
+      Heeft u vragen of wilt u annuleren? Neem contact met ons op via
+      <a href="mailto:denwittenhaen@philadelphia.nl" style="color:#5a7a5e;text-decoration:none;">denwittenhaen@philadelphia.nl</a>
+      of bel ons op 078 611 20 50.<br><br>
       Met vriendelijke groet,<br>
       <strong>Team Den Witten Haen</strong>
     </p>

@@ -1,5 +1,4 @@
-import { Landmark, Users, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Landmark, Users, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
@@ -42,13 +41,20 @@ const GroupsPage = () => (
       </div>
 
       <div className="bg-card rounded-lg p-8 border border-border text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
+          <Phone className="w-7 h-7 text-primary" />
+        </div>
         <h2 className="font-serif text-2xl mb-3">Neem contact op</h2>
-        <p className="text-muted-foreground font-sans text-sm mb-6">
-          Wilt u meer weten over de mogelijkheden? Neem vrijblijvend contact met ons op of maak direct een reservering.
+        <p className="text-muted-foreground font-sans text-sm mb-2 max-w-md mx-auto">
+          Groepen, vergaderingen en feesten gaan niet via het online reserveringssysteem.
+          Bel ons voor een vrijblijvend gesprek over de mogelijkheden.
         </p>
-        <Link to="/reserveren">
-          <Button variant="hero" size="lg">Reservering aanvragen</Button>
-        </Link>
+        <p className="font-serif text-lg text-foreground mb-6">078 611 20 50</p>
+        <a href="tel:0786112050">
+          <Button variant="hero" size="lg" className="gap-2">
+            <Phone className="w-4 h-4" /> Bel ons
+          </Button>
+        </a>
       </div>
     </div>
   </main>
