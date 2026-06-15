@@ -128,24 +128,24 @@ const Index = () => {
 
       {/* Ons Team */}
       <section className="pt-20 pb-10 bg-card">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="text-center mb-10">
-            <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
-            <h2 className="font-serif text-3xl md:text-4xl mb-4">Ons Team</h2>
-            <p className="text-muted-foreground font-sans leading-relaxed max-w-2xl mx-auto">
-              Bij Den Witten Haen werken mensen met een beperking met hart en ziel aan uw ervaring.
-              Ons team maakt van elk bezoek iets bijzonders — met warmte, aandacht en oprechte gastvrijheid.
-            </p>
-          </div>
-          <div className="rounded-xl overflow-hidden border border-border shadow-sm mb-8">
-            <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-80 object-cover" />
-          </div>
-          <div className="text-center">
-            <Link to="/team">
-              <Button variant="outline" className="rounded-full gap-2">
-                Ontmoet ons team <ChevronRight className="w-4 h-4" />
-              </Button>
-            </Link>
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <div>
+              <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
+              <h2 className="font-serif text-3xl md:text-4xl mb-4">Ons Team</h2>
+              <p className="text-muted-foreground font-sans leading-relaxed mb-6">
+                Bij Den Witten Haen werken mensen met een beperking met hart en ziel aan uw ervaring.
+                Ons team maakt van elk bezoek iets bijzonders — met warmte, aandacht en oprechte gastvrijheid.
+              </p>
+              <Link to="/team">
+                <Button variant="outline" className="rounded-full gap-2">
+                  Ontmoet ons team <ChevronRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-border shadow-sm">
+              <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-[420px] object-cover object-top" />
+            </div>
           </div>
         </div>
       </section>
