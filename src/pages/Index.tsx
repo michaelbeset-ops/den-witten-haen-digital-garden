@@ -130,6 +130,9 @@ const Index = () => {
       <section className="pt-20 pb-10 bg-card">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <div className="rounded-xl overflow-hidden border border-border shadow-sm order-first">
+              <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-[420px] object-cover object-bottom" />
+            </div>
             <div>
               <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
               <h2 className="font-serif text-3xl md:text-4xl mb-4">Ons Team</h2>
@@ -143,9 +146,6 @@ const Index = () => {
                 </Button>
               </Link>
             </div>
-            <div className="rounded-xl overflow-hidden border border-border shadow-sm">
-              <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-[420px] object-cover object-top" />
-            </div>
           </div>
         </div>
       </section>
@@ -158,19 +158,16 @@ const Index = () => {
             <h2 className="font-serif text-3xl md:text-4xl mb-6">Over Den Witten Haen</h2>
             <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
               <p>
-                In het historische centrum van Dordrecht, verscholen achter eeuwenoude gevels,
-                ligt Den Witten Haen — een lunchroom met een bijzonder verhaal. Ons monumentale
-                pand herbergt niet alleen een prachtig interieur, maar ook een verborgen stadstuin
-                waar u in alle rust kunt genieten. De oudste beuk van Dordrecht is zelfs zichtbaar
-                vanuit onze binnentuin.
+                In het historische centrum van Dordrecht ligt Den Witten Haen — een lunchroom
+                in een monumentaal pand met een verborgen stadstuin en de oudste beuk van Dordrecht.
               </p>
-              <p>
+              <p className="hidden md:block">
                 Bij ons werken mensen met een beperking met hart en ziel aan uw ervaring.
                 Dat maakt Den Witten Haen niet alleen een plek om te eten, maar een plek om u
                 thuis te voelen. Wij geloven dat gastvrijheid het mooiste is wanneer het van
                 binnenuit komt.
               </p>
-              <p>
+              <p className="hidden md:block">
                 Den Witten Haen is onderdeel van Philadelphia, een organisatie die mensen met een
                 beperking ondersteunt om het beste uit zichzelf te halen. Samen creëren wij een
                 plek waar iedereen welkom is.
