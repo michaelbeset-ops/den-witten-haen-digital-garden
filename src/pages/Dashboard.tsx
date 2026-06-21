@@ -47,7 +47,7 @@ const UsersSection = () => {
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase.functions.invoke('manage-users', { method: 'GET' } as never)
+    const { data, error } = await supabase.functions.invoke('manage-users', { body: { action: 'list' } })
     setLoading(false)
     if (error) { setError('Gebruikers konden niet worden geladen.'); return }
     setUsers((data as { users: AdminUser[] }).users ?? [])
@@ -61,9 +61,8 @@ const UsersSection = () => {
     setInviteSuccess(false)
     setInviting(true)
     const { error } = await supabase.functions.invoke('manage-users', {
-      method: 'POST',
-      body: { email: inviteEmail.trim() },
-    } as never)
+      body: { action: 'create', email: inviteEmail.trim() },
+    })
     setInviting(false)
     if (error) { setInviteError('Kon gebruiker niet aanmaken. Controleer het e-mailadres.'); return }
     setInviteSuccess(true)
@@ -74,7 +73,7 @@ const UsersSection = () => {
   const handleDelete = async (userId: string) => {
     if (!confirm('Weet u zeker dat u deze gebruiker wilt verwijderen?')) return
     setDeletingId(userId)
-    await supabase.functions.invoke('manage-users', { method: 'DELETE', body: { userId } } as never)
+    await supabase.functions.invoke('manage-users', { body: { action: 'delete', userId } })
     setDeletingId(null)
     fetchUsers()
   }
