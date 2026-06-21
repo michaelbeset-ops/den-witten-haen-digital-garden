@@ -20,6 +20,7 @@ import TeamPage from "./pages/Team";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ResetWachtwoordPage from "./pages/ResetWachtwoord";
 import "@fontsource/playfair-display/400.css";
 import "@fontsource/playfair-display/700.css";
 import "@fontsource/inter/400.css";
@@ -61,6 +62,7 @@ const App = () => (
 
           {/* Auth / admin routes — no global Navbar/Footer */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-wachtwoord" element={<ResetWachtwoordPage />} />
           <Route
             path="/dashboard"
             element={
