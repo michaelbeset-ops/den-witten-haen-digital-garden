@@ -33,6 +33,20 @@ const StatusBadge = ({ status }: { status: Reservation['status'] }) => {
   return <span className={`text-xs font-sans font-medium px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>
 }
 
+// ─── manage-users helper ──────────────────────────────────────────────────────
+
+const callManageUsers = async (body: object) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + (session?.access_token ?? ''),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+}
+
 // ─── UsersSection ─────────────────────────────────────────────────────────────
 
 const UsersSection = () => {
@@ -47,10 +61,17 @@ const UsersSection = () => {
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase.functions.invoke('manage-users', { body: { action: 'list' } })
-    setLoading(false)
-    if (error) { setError('Gebruikers konden niet worden geladen.'); return }
-    setUsers((data as { users: AdminUser[] }).users ?? [])
+    setError('')
+    try {
+      const res = await callManageUsers({ action: 'list' })
+      const data = await res.json()
+      if (!res.ok) { setError('Gebruikers konden niet worden geladen.'); return }
+      setUsers((data as { users: AdminUser[] }).users ?? [])
+    } catch {
+      setError('Gebruikers konden niet worden geladen.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
@@ -60,22 +81,28 @@ const UsersSection = () => {
     setInviteError('')
     setInviteSuccess(false)
     setInviting(true)
-    const { error } = await supabase.functions.invoke('manage-users', {
-      body: { action: 'create', email: inviteEmail.trim() },
-    })
-    setInviting(false)
-    if (error) { setInviteError('Kon gebruiker niet aanmaken. Controleer het e-mailadres.'); return }
-    setInviteSuccess(true)
-    setInviteEmail('')
-    fetchUsers()
+    try {
+      const res = await callManageUsers({ action: 'create', email: inviteEmail.trim() })
+      if (!res.ok) { setInviteError('Kon gebruiker niet aanmaken. Controleer het e-mailadres.'); return }
+      setInviteSuccess(true)
+      setInviteEmail('')
+      fetchUsers()
+    } catch {
+      setInviteError('Kon gebruiker niet aanmaken. Controleer het e-mailadres.')
+    } finally {
+      setInviting(false)
+    }
   }
 
   const handleDelete = async (userId: string) => {
     if (!confirm('Weet u zeker dat u deze gebruiker wilt verwijderen?')) return
     setDeletingId(userId)
-    await supabase.functions.invoke('manage-users', { body: { action: 'delete', userId } })
-    setDeletingId(null)
-    fetchUsers()
+    try {
+      await callManageUsers({ action: 'delete', userId })
+    } finally {
+      setDeletingId(null)
+      fetchUsers()
+    }
   }
 
   return (
