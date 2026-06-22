@@ -1,9 +1,7 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 Deno.serve(async (req: Request) => {
@@ -12,25 +10,33 @@ Deno.serve(async (req: Request) => {
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+  // Verify the caller is a valid logged-in user
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) return json({ error: 'Niet geautoriseerd' }, 401)
 
-  const supabaseAdmin = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { 'Authorization': authHeader, 'apikey': SERVICE_KEY },
+  })
+  if (!userRes.ok) return json({ error: 'Niet geautoriseerd' }, 401)
+  const caller = await userRes.json()
+  if (!caller?.id) return json({ error: 'Niet geautoriseerd' }, 401)
 
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-    authHeader.replace('Bearer ', '')
-  )
-  if (authError || !user) return json({ error: 'Niet geautoriseerd' }, 401)
+  const body = await req.json()
+  const { action } = body
 
-  if (req.method === 'GET') {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers()
-    if (error) return json({ error: error.message }, 500)
+  if (action === 'list') {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, {
+      headers: { 'Authorization': `Bearer ${SERVICE_KEY}`, 'apikey': SERVICE_KEY },
+    })
+    const data = await res.json()
+    if (!res.ok) return json({ error: data.message ?? 'Fout bij ophalen gebruikers' }, 500)
     return json({
-      users: data.users.map(u => ({
+      users: (data.users ?? []).map((u: {
+        id: string; email: string; created_at: string; last_sign_in_at: string | null
+      }) => ({
         id: u.id,
         email: u.email,
         created_at: u.created_at,
@@ -39,20 +45,37 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  if (req.method === 'POST') {
-    const { email } = await req.json()
-    const { error } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true })
-    if (error) return json({ error: error.message }, 500)
+  if (action === 'create') {
+    const { email } = body
+    if (!email) return json({ error: 'E-mailadres ontbreekt' }, 400)
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'apikey': SERVICE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, email_confirm: true }),
+    })
+    const data = await res.json()
+    if (!res.ok) return json({ error: data.message ?? 'Fout bij aanmaken gebruiker' }, 500)
     return json({ success: true })
   }
 
-  if (req.method === 'DELETE') {
-    const { userId } = await req.json()
-    if (userId === user.id) return json({ error: 'U kunt uw eigen account niet verwijderen' }, 400)
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
-    if (error) return json({ error: error.message }, 500)
+  if (action === 'delete') {
+    const { userId } = body
+    if (!userId) return json({ error: 'userId ontbreekt' }, 400)
+    if (userId === caller.id) return json({ error: 'U kunt uw eigen account niet verwijderen' }, 400)
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${SERVICE_KEY}`, 'apikey': SERVICE_KEY },
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      return json({ error: data.message ?? 'Fout bij verwijderen gebruiker' }, 500)
+    }
     return json({ success: true })
   }
 
-  return json({ error: 'Niet toegestaan' }, 405)
+  return json({ error: 'Onbekende actie' }, 400)
 })

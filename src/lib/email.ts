@@ -1,4 +1,24 @@
-import { supabase } from './supabase'
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+async function callSendEmail(body: object): Promise<void> {
+  try {
+    const res = await fetch(FUNCTIONS_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + ANON_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      console.error('E-mail kon niet worden verzonden:', err)
+    }
+  } catch (e) {
+    console.error('E-mail kon niet worden verzonden:', e)
+  }
+}
 
 export async function sendConfirmationEmail(r: {
   name: string
@@ -7,19 +27,7 @@ export async function sendConfirmationEmail(r: {
   time: string
   guests: number
 }): Promise<void> {
-  const { error } = await supabase.functions.invoke('send-email', {
-    body: {
-      type: 'confirmation',
-      name: r.name,
-      email: r.email,
-      date: r.date,
-      time: r.time,
-      guests: r.guests,
-    },
-  })
-  if (error) {
-    console.error('Bevestigingsmail kon niet worden verzonden:', error)
-  }
+  await callSendEmail({ type: 'confirmation', ...r })
 }
 
 export async function sendCancellationEmail(r: {
@@ -28,16 +36,5 @@ export async function sendCancellationEmail(r: {
   date: string
   time: string
 }): Promise<void> {
-  const { error } = await supabase.functions.invoke('send-email', {
-    body: {
-      type: 'cancellation',
-      name: r.name,
-      email: r.email,
-      date: r.date,
-      time: r.time,
-    },
-  })
-  if (error) {
-    console.error('Annuleringsmail kon niet worden verzonden:', error)
-  }
+  await callSendEmail({ type: 'cancellation', ...r })
 }
