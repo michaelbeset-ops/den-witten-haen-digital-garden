@@ -36,15 +36,22 @@ const StatusBadge = ({ status }: { status: Reservation['status'] }) => {
 // ─── manage-users helper ──────────────────────────────────────────────────────
 
 const callManageUsers = async (body: object) => {
-  const { data: { session } } = await supabase.auth.getSession()
-  return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`, {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError) console.error('[manage-users] session error:', sessionError)
+  const token = session?.access_token ?? ''
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`
+  console.log('[manage-users] calling', url, 'token?', !!token)
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer ' + (session?.access_token ?? ''),
+      'Authorization': 'Bearer ' + token,
+      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   })
+  console.log('[manage-users] status', res.status)
+  return res
 }
 
 // ─── UsersSection ─────────────────────────────────────────────────────────────

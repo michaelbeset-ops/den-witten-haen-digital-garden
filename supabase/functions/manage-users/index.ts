@@ -14,19 +14,26 @@ Deno.serve(async (req: Request) => {
   const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
+  console.log('[manage-users] request received:', req.method)
+
   // Verify the caller is a valid logged-in user
   const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return json({ error: 'Niet geautoriseerd' }, 401)
+  if (!authHeader) {
+    console.log('[manage-users] no auth header')
+    return json({ error: 'Niet geautoriseerd' }, 401)
+  }
 
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { 'Authorization': authHeader, 'apikey': ANON_KEY },
   })
+  console.log('[manage-users] auth check status:', userRes.status)
   if (!userRes.ok) return json({ error: 'Niet geautoriseerd' }, 401)
   const caller = await userRes.json()
   if (!caller?.id) return json({ error: 'Niet geautoriseerd' }, 401)
 
   const body = await req.json()
   const { action } = body
+  console.log('[manage-users] action:', action)
 
   if (action === 'list') {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=100`, {
