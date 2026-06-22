@@ -11,6 +11,7 @@ Deno.serve(async (req: Request) => {
     new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+  const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
   // Verify the caller is a valid logged-in user
@@ -18,7 +19,7 @@ Deno.serve(async (req: Request) => {
   if (!authHeader) return json({ error: 'Niet geautoriseerd' }, 401)
 
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { 'Authorization': authHeader, 'apikey': SERVICE_KEY },
+    headers: { 'Authorization': authHeader, 'apikey': ANON_KEY },
   })
   if (!userRes.ok) return json({ error: 'Niet geautoriseerd' }, 401)
   const caller = await userRes.json()
