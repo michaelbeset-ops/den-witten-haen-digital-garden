@@ -160,9 +160,9 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
 
-  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-  if (!RESEND_API_KEY) {
-    return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
+  const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY')
+  if (!BREVO_API_KEY) {
+    return new Response(JSON.stringify({ error: 'BREVO_API_KEY not configured' }), {
       status: 500,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
@@ -179,25 +179,28 @@ Deno.serve(async (req: Request) => {
     ? buildConfirmationHtml(name, date, time, guests ?? 1)
     : buildCancellationHtml(name, date, time)
 
-  const resendResponse = await fetch('https://api.resend.com/emails', {
+  const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'denwittenhaen@philadelphia.nl'
+  const FROM_NAME = 'Den Witten Haen'
+
+  const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'api-key': BREVO_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: Deno.env.get('RESEND_FROM_EMAIL') ?? 'Den Witten Haen <onboarding@resend.dev>',
-      to: [email],
+      sender: { name: FROM_NAME, email: FROM_EMAIL },
+      to: [{ email, name }],
       subject,
-      html,
+      htmlContent: html,
     }),
   })
 
-  const result = await resendResponse.json()
+  const result = await brevoResponse.json()
   return new Response(
-    JSON.stringify(resendResponse.ok ? { success: true } : { error: result }),
+    JSON.stringify(brevoResponse.ok ? { success: true } : { error: result }),
     {
-      status: resendResponse.ok ? 200 : 500,
+      status: brevoResponse.ok ? 200 : 500,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     }
   )
