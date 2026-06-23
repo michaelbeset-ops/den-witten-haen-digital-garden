@@ -13,8 +13,14 @@ import {
 import { supabase } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 
-const SLOTS_MON_WED = ['10:00', '12:00', '14:00']
-const SLOTS_THU_SAT = ['10:00', '12:00', '14:00', '15:00']
+const SLOTS_MON_WED = [
+  '10:00', '10:30', '11:00', '11:30', '12:00',
+  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
+]
+const SLOTS_THU_SAT = [
+  '10:00', '10:30', '11:00', '11:30', '12:00',
+  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
+]
 
 function getSlotsForDate(dateStr: string): string[] {
   if (!dateStr) return SLOTS_MON_WED
@@ -24,9 +30,34 @@ function getSlotsForDate(dateStr: string): string[] {
   return SLOTS_MON_WED // ma t/m wo
 }
 
-const MAX_GUESTS_PER_SLOT = 48
+const MAX_GUESTS_PER_WINDOW = 48
 const MAX_GUESTS_PER_RESERVATION = 8
 const PHONE_NUMBER = '078 611 20 50'
+
+// Rolling 2-hour window helpers
+const toMin = (t: string): number => {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+const toTime = (min: number): string => {
+  if (min < 0 || min >= 1440) return ''
+  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+}
+// Returns max concurrent guests in any 30-min sub-window during [slotTime, slotTime+2h)
+// counting existing slotCounts + newGuests additional people booking at slotTime
+const windowLoad = (counts: SlotCounts, slotTime: string, newGuests = 0): number => {
+  const base = toMin(slotTime)
+  let maxLoad = 0
+  for (let k = 0; k < 4; k++) {
+    // At sub-time base+k*30, the occupied slots are base+(k-3)*30 … base+k*30
+    let load = newGuests // new guests at slotTime appear in every sub-window
+    for (let j = k - 3; j <= k; j++) {
+      load += counts[toTime(base + j * 30)] ?? 0
+    }
+    maxLoad = Math.max(maxLoad, load)
+  }
+  return maxLoad
+}
 
 const tomorrowStr = (): string => {
   const d = new Date()
@@ -83,7 +114,7 @@ const ReservationPage = () => {
         }
         setSlotCounts(counts)
         // Reset time if selected slot became full
-        if (time && (counts[time] ?? 0) >= MAX_GUESTS_PER_SLOT) {
+        if (time && windowLoad(counts, time) >= MAX_GUESTS_PER_WINDOW) {
           setTime('')
         }
       })
@@ -126,7 +157,7 @@ const ReservationPage = () => {
       setSlotCounts(freshCounts)
 
       const requestedGuests = parseInt(guests, 10)
-      if ((freshCounts[time] ?? 0) + requestedGuests > MAX_GUESTS_PER_SLOT) {
+      if (windowLoad(freshCounts, time, requestedGuests) > MAX_GUESTS_PER_WINDOW) {
         setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot heeft niet genoeg ruimte meer voor uw gezelschap. Kies een ander tijdslot.' }))
         setTime('')
         setSubmitting(false)
@@ -299,8 +330,7 @@ const ReservationPage = () => {
                   {getSlotsForDate(date).length === 0 ? (
                     <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
                   ) : getSlotsForDate(date).map((slot) => {
-                    const count = slotCounts[slot] ?? 0
-                    const full = count >= MAX_GUESTS_PER_SLOT
+                    const full = windowLoad(slotCounts, slot) >= MAX_GUESTS_PER_WINDOW
                     return (
                       <SelectItem key={slot} value={slot} disabled={full}>
                         {slot}{full ? ' (Volgeboekt)' : ''}
