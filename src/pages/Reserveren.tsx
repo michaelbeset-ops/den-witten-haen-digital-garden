@@ -13,14 +13,8 @@ import {
 import { supabase } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 
-const SLOTS_MON_WED = [
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
-]
-const SLOTS_THU_SAT = [
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
-]
+const SLOTS_MON_WED = ['10:00', '12:00', '14:00']
+const SLOTS_THU_SAT = ['10:00', '12:00', '14:00', '15:00']
 
 function getSlotsForDate(dateStr: string): string[] {
   if (!dateStr) return SLOTS_MON_WED
