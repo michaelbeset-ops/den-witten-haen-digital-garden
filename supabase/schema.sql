@@ -1,5 +1,6 @@
--- Den Witten Haen — reservations table
--- Run this in the Supabase SQL editor to set up the database schema.
+-- Den Witten Haen — reservations schema
+-- Run this in the Supabase SQL editor to set up the database schema from scratch.
+-- For an existing database, run supabase/migrations/001_add_seating_and_closures.sql instead.
 
 create table if not exists reservations (
   id uuid default gen_random_uuid() primary key,
@@ -11,7 +12,8 @@ create table if not exists reservations (
   time text not null,
   guests integer not null,
   message text,
-  status text default 'aangevraagd'
+  status text default 'aangevraagd',
+  seating_preference text
 );
 
 -- Row Level Security
@@ -32,7 +34,27 @@ create policy "auth_update" on reservations
 -- Enable realtime updates for the dashboard
 alter publication supabase_realtime add table reservations;
 
--- RPC: slot guest totals for the public reservation form
+-- ─── blocked_slots ────────────────────────────────────────────────────────────
+
+create table if not exists blocked_slots (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamptz default now(),
+  date date not null,
+  time text,       -- null = whole day blocked
+  reason text
+);
+
+alter table blocked_slots enable row level security;
+
+-- Anyone (incl. anon) may read blocked slots (to show closed slots on form)
+create policy "anon_select_blocked" on blocked_slots
+  for select to anon using (true);
+
+-- Authenticated staff may manage closures
+create policy "auth_all_blocked" on blocked_slots
+  for all to authenticated using (true);
+
+-- ─── RPC: slot guest totals ───────────────────────────────────────────────────
 -- Returns sum of guests per slot (not count of reservations).
 -- Uses security definer so anon users get only counts, never personal data.
 create or replace function public.get_slot_counts(check_date date)
@@ -50,7 +72,9 @@ $$;
 
 grant execute on function public.get_slot_counts(date) to anon;
 
--- RPC: create reservation with rolling 2-hour window capacity check (max 48 concurrent guests)
+-- ─── RPC: create reservation ──────────────────────────────────────────────────
+-- Rolling 2-hour window capacity check (max 48 concurrent guests).
+-- Also checks blocked_slots so a closed day/slot cannot be booked.
 create or replace function public.create_reservation(
   p_name    text,
   p_email   text,
@@ -58,7 +82,8 @@ create or replace function public.create_reservation(
   p_date    date,
   p_time    text,
   p_guests  integer,
-  p_message text default null
+  p_message text    default null,
+  p_seating text    default null
 )
 returns uuid
 language plpgsql
@@ -71,6 +96,22 @@ declare
   sub_load integer;
   k        integer;
 begin
+  -- Check if the whole day is blocked
+  if exists (
+    select 1 from blocked_slots
+    where date = p_date and time is null
+  ) then
+    raise exception 'Op deze dag zijn wij gesloten' using errcode = 'P0002';
+  end if;
+
+  -- Check if the specific time slot is blocked
+  if exists (
+    select 1 from blocked_slots
+    where date = p_date and time = p_time
+  ) then
+    raise exception 'Dit tijdslot is gesloten' using errcode = 'P0002';
+  end if;
+
   -- Rolling window: check 4 sub-windows (T+0, T+30, T+60, T+90 min)
   for k in 0..3 loop
     select coalesce(sum(r.guests), 0) + p_guests
@@ -90,12 +131,12 @@ begin
     raise exception 'Dit tijdslot heeft niet genoeg ruimte' using errcode = 'P0001';
   end if;
 
-  insert into reservations (name, email, phone, date, time, guests, message, status)
-  values (p_name, p_email, p_phone, p_date, p_time, p_guests, p_message, 'aangevraagd')
+  insert into reservations (name, email, phone, date, time, guests, message, status, seating_preference)
+  values (p_name, p_email, p_phone, p_date, p_time, p_guests, p_message, 'aangevraagd', p_seating)
   returning id into new_id;
 
   return new_id;
 end;
 $$;
 
-grant execute on function public.create_reservation(text, text, text, date, text, integer, text) to anon;
+grant execute on function public.create_reservation(text, text, text, date, text, integer, text, text) to anon;

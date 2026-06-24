@@ -16,4 +16,5 @@ export type Reservation = {
   guests: number
   message?: string
   status: 'aangevraagd' | 'bevestigd' | 'geannuleerd'
+  seating_preference?: 'binnen' | 'buiten' | null
 }

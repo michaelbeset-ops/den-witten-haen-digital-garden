@@ -6,7 +6,14 @@ import { sendCancellationEmail } from '@/lib/email'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type ActionLoading = Record<string, 'annuleren' | null>
-type View = 'reserveringen' | 'gebruikers'
+type View = 'reserveringen' | 'gebruikers' | 'sluitingen'
+
+interface BlockedSlot {
+  id: string
+  date: string
+  time: string | null
+  reason: string | null
+}
 
 interface AdminUser {
   id: string
@@ -187,6 +194,143 @@ const UsersSection = () => {
   )
 }
 
+// ─── ClosuresSection ──────────────────────────────────────────────────────────
+
+const ClosuresSection = () => {
+  const [closures, setClosures] = useState<BlockedSlot[]>([])
+  const [loading, setLoading] = useState(true)
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const fetchClosures = useCallback(async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('blocked_slots')
+      .select('*')
+      .order('date', { ascending: true })
+    setLoading(false)
+    setClosures((data as BlockedSlot[]) ?? [])
+  }, [])
+
+  useEffect(() => { fetchClosures() }, [fetchClosures])
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!date) return
+    setSaving(true)
+    await supabase.from('blocked_slots').insert({
+      date,
+      time: time || null,
+      reason: reason.trim() || null,
+    })
+    setSaving(false)
+    setDate('')
+    setTime('')
+    setReason('')
+    fetchClosures()
+  }
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id)
+    await supabase.from('blocked_slots').delete().eq('id', id)
+    setDeletingId(null)
+    fetchClosures()
+  }
+
+  return (
+    <div className="p-6 max-w-2xl">
+      <h2 className="font-serif text-2xl text-foreground mb-6">Sluitingen</h2>
+
+      <div className="bg-card border border-border rounded-lg p-5 mb-6">
+        <h3 className="font-sans text-sm font-semibold text-foreground mb-1">Dag of tijdslot sluiten</h3>
+        <p className="text-xs text-muted-foreground font-sans mb-4">
+          Laat het tijdveld leeg om een <strong>hele dag</strong> te blokkeren (bijv. feestdagen, bruiloften).
+          Vul een tijd in om alleen dat tijdslot te sluiten.
+        </p>
+        <form onSubmit={handleAdd} className="space-y-3">
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs font-sans text-muted-foreground mb-1 block">Datum *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                required
+                className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-sans text-muted-foreground mb-1 block">Tijdslot (optioneel)</label>
+              <input
+                type="time"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                step="1800"
+                className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-sans text-muted-foreground mb-1 block">Reden (optioneel)</label>
+            <input
+              type="text"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="bijv. Bruiloft, Personeel vrij, Feestdag…"
+              className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={saving || !date}
+            className="font-sans text-sm font-medium px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Opslaan…' : 'Sluiting toevoegen'}
+          </button>
+        </form>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3">Datum</th>
+              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3">Tijdslot</th>
+              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3">Reden</th>
+              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm font-sans text-muted-foreground">Laden…</td></tr>
+            ) : closures.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm font-sans text-muted-foreground">Geen sluitingen gepland.</td></tr>
+            ) : closures.map(c => (
+              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{fmtDate(c.date)}</td>
+                <td className="px-4 py-3 text-sm font-sans text-foreground">{c.time ?? <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>}</td>
+                <td className="px-4 py-3 text-sm font-sans text-muted-foreground">{c.reason ?? '—'}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    disabled={deletingId === c.id}
+                    className="text-xs font-sans font-medium px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-700 disabled:opacity-50 transition-colors"
+                  >
+                    {deletingId === c.id ? 'Bezig…' : 'Verwijderen'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 const Dashboard = () => {
@@ -257,6 +401,12 @@ const Dashboard = () => {
           >
             Gebruikers
           </button>
+          <button
+            onClick={() => setView('sluitingen')}
+            className={`text-sm font-sans font-medium text-left px-3 py-2 rounded transition-colors ${view === 'sluitingen' ? 'bg-primary-foreground/10 opacity-100' : 'opacity-60 hover:opacity-90'}`}
+          >
+            Sluitingen
+          </button>
         </nav>
         <div className="p-4 border-t border-primary-foreground/20">
           <button onClick={handleLogout} className="w-full text-left text-sm font-sans opacity-70 hover:opacity-100 px-3 py-2 transition-opacity">
@@ -266,7 +416,7 @@ const Dashboard = () => {
       </aside>
 
       <main className="flex-1 overflow-auto">
-        {view === 'gebruikers' ? <UsersSection /> : (
+        {view === 'sluitingen' ? <ClosuresSection /> : view === 'gebruikers' ? <UsersSection /> : (
           <div className="p-6">
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <h2 className="font-serif text-2xl text-foreground">Reserveringen</h2>
@@ -333,7 +483,14 @@ const Dashboard = () => {
                         </td>
                         <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{r.phone}</td>
                         <td className="px-4 py-3 text-sm font-sans text-foreground text-center">{r.guests}</td>
-                        <td className="px-4 py-3 text-sm font-sans text-muted-foreground max-w-[180px] truncate">{r.message || '—'}</td>
+                        <td className="px-4 py-3 text-sm font-sans text-muted-foreground max-w-[200px]">
+                          {r.seating_preference && (
+                            <span className={`inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mr-1 mb-0.5 ${r.seating_preference === 'buiten' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}`}>
+                              {r.seating_preference.charAt(0).toUpperCase() + r.seating_preference.slice(1)}
+                            </span>
+                          )}
+                          <span className="truncate block">{r.message || (r.seating_preference ? '' : '—')}</span>
+                        </td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3">
                           {r.status !== 'geannuleerd' && (

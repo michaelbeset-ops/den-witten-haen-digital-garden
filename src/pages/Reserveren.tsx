@@ -84,8 +84,11 @@ const ReservationPage = () => {
   const [time, setTime] = useState('')
   const [guests, setGuests] = useState('')
   const [message, setMessage] = useState('')
+  const [seating, setSeating] = useState<'geen' | 'binnen' | 'buiten'>('geen')
 
   const [slotCounts, setSlotCounts] = useState<SlotCounts>({})
+  const [blockedTimes, setBlockedTimes] = useState<Set<string>>(new Set())
+  const [dayBlocked, setDayBlocked] = useState(false)
   const [loadingSlots, setLoadingSlots] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
@@ -93,31 +96,39 @@ const ReservationPage = () => {
   const [generalError, setGeneralError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
-  // Fetch slot availability via RPC (anon-safe: returns counts only, no personal data)
+  // Fetch slot availability + blocked days/times
   useEffect(() => {
     if (!date) {
       setSlotCounts({})
+      setBlockedTimes(new Set())
+      setDayBlocked(false)
       return
     }
     setLoadingSlots(true)
-    supabase
-      .rpc('get_slot_counts', { check_date: date })
-      .then(({ data, error }) => {
-        setLoadingSlots(false)
-        if (error) {
-          console.error('Fout bij ophalen beschikbaarheid:', error)
-          return
-        }
+    Promise.all([
+      supabase.rpc('get_slot_counts', { check_date: date }),
+      supabase.from('blocked_slots').select('time').eq('date', date),
+    ]).then(([slotRes, blockedRes]) => {
+      setLoadingSlots(false)
+
+      if (!slotRes.error) {
         const counts: SlotCounts = {}
-        for (const row of (data ?? []) as { slot_time: string; slot_count: number }[]) {
+        for (const row of (slotRes.data ?? []) as { slot_time: string; slot_count: number }[]) {
           counts[row.slot_time] = row.slot_count
         }
         setSlotCounts(counts)
-        // Reset time if selected slot became full
-        if (time && windowLoad(counts, time) >= MAX_GUESTS_PER_WINDOW) {
-          setTime('')
-        }
-      })
+        if (time && windowLoad(counts, time) >= MAX_GUESTS_PER_WINDOW) setTime('')
+      }
+
+      if (!blockedRes.error) {
+        const rows = (blockedRes.data ?? []) as { time: string | null }[]
+        const fullDay = rows.some(r => r.time === null)
+        setDayBlocked(fullDay)
+        const times = new Set<string>(rows.filter(r => r.time !== null).map(r => r.time as string))
+        setBlockedTimes(times)
+        if (fullDay || (time && times.has(time))) setTime('')
+      }
+    })
   }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const validate = (): boolean => {
@@ -127,7 +138,9 @@ const ReservationPage = () => {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Voer een geldig e-mailadres in.'
     if (!phone.trim()) errors.phone = 'Telefoonnummer is verplicht.'
     if (!date) errors.date = 'Datum is verplicht.'
+    if (date && dayBlocked) errors.date = 'Op deze dag zijn wij gesloten.'
     if (!time) errors.time = 'Tijdslot is verplicht.'
+    else if (blockedTimes.has(time)) errors.time = 'Dit tijdslot is gesloten.'
     const guestsNum = parseInt(guests, 10)
     if (!guests) errors.guests = 'Aantal personen is verplicht.'
     else if (isNaN(guestsNum) || guestsNum < 1) errors.guests = 'Voer een geldig aantal in.'
@@ -175,6 +188,7 @@ const ReservationPage = () => {
       p_time: time,
       p_guests: parseInt(guests, 10),
       p_message: message.trim() || null,
+      p_seating: seating === 'geen' ? null : seating,
     })
 
     if (insertError || !newId) {
@@ -208,7 +222,10 @@ const ReservationPage = () => {
     setTime('')
     setGuests('')
     setMessage('')
+    setSeating('geen')
     setSlotCounts({})
+    setBlockedTimes(new Set())
+    setDayBlocked(false)
     setFieldErrors({})
   }
 
@@ -327,13 +344,16 @@ const ReservationPage = () => {
                   <SelectValue placeholder={loadingSlots ? 'Beschikbaarheid laden...' : 'Kies een tijdslot'} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getSlotsForDate(date).length === 0 ? (
+                  {dayBlocked ? (
+                    <SelectItem value="__dayblocked__" disabled>Op deze dag zijn wij gesloten</SelectItem>
+                  ) : getSlotsForDate(date).length === 0 ? (
                     <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
                   ) : getSlotsForDate(date).map((slot) => {
-                    const full = windowLoad(slotCounts, slot) >= MAX_GUESTS_PER_WINDOW
+                    const blocked = blockedTimes.has(slot)
+                    const full = !blocked && windowLoad(slotCounts, slot) >= MAX_GUESTS_PER_WINDOW
                     return (
-                      <SelectItem key={slot} value={slot} disabled={full}>
-                        {slot}{full ? ' (Volgeboekt)' : ''}
+                      <SelectItem key={slot} value={slot} disabled={blocked || full}>
+                        {slot}{blocked ? ' (Gesloten)' : full ? ' (Volgeboekt)' : ''}
                       </SelectItem>
                     )
                   })}
@@ -342,7 +362,10 @@ const ReservationPage = () => {
               {!date && (
                 <p className="mt-1 text-xs text-muted-foreground font-sans">Kies eerst een datum.</p>
               )}
-              {date && getSlotsForDate(date).length === 0 && (
+              {date && dayBlocked && (
+                <p className="mt-1 text-xs text-destructive font-sans">Op deze dag zijn wij gesloten.</p>
+              )}
+              {date && !dayBlocked && getSlotsForDate(date).length === 0 && (
                 <p className="mt-1 text-xs text-destructive font-sans">Op zondag zijn wij gesloten.</p>
               )}
               {fieldErrors.time && (
@@ -371,6 +394,28 @@ const ReservationPage = () => {
                   <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
                 </p>
               )}
+            </div>
+
+            {/* Zitplaatsvoorkeur */}
+            <div>
+              <Label>Zitplaatsvoorkeur</Label>
+              <div className="flex gap-6 mt-2">
+                {(['geen', 'binnen', 'buiten'] as const).map(opt => (
+                  <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="seating"
+                      value={opt}
+                      checked={seating === opt}
+                      onChange={() => setSeating(opt)}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm font-sans text-foreground">
+                      {opt === 'geen' ? 'Geen voorkeur' : opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Opmerking */}
