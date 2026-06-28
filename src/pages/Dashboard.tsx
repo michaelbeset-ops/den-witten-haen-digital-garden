@@ -11,7 +11,8 @@ type View = 'reserveringen' | 'sluitingen'
 interface BlockedSlot {
   id: string
   date: string
-  time: string | null
+  time_from: string | null
+  time_to: string | null
   reason: string | null
 }
 
@@ -22,8 +23,11 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 const fmtDate = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
 
-// Normalize HH:MM:SS → HH:MM (browser time inputs sometimes include seconds)
-const normTime = (t: string) => t.substring(0, 5)
+const fmtTimeRange = (c: BlockedSlot): React.ReactNode => {
+  if (!c.time_from) return <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>
+  if (!c.time_to || c.time_to === c.time_from) return c.time_from
+  return `${c.time_from} – ${c.time_to}`
+}
 
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
 
@@ -55,9 +59,9 @@ const ClosuresSection = () => {
     setLoading(true)
     const { data } = await supabase
       .from('blocked_slots')
-      .select('*')
+      .select('id, date, time_from, time_to, reason')
       .order('date', { ascending: true })
-      .order('time', { ascending: true, nullsFirst: true })
+      .order('time_from', { ascending: true, nullsFirst: true })
     setLoading(false)
     setClosures((data as BlockedSlot[]) ?? [])
   }, [])
@@ -68,22 +72,12 @@ const ClosuresSection = () => {
     e.preventDefault()
     if (!date) return
     setSaving(true)
-
-    if (!timeFrom) {
-      // Whole day
-      await supabase.from('blocked_slots').insert({ date, time: null, reason: reason.trim() || null })
-    } else {
-      // Range: from timeFrom to timeTo (or end of day if timeTo is empty)
-      const fromIdx = ALL_SLOTS.indexOf(timeFrom)
-      const toIdx = timeTo ? ALL_SLOTS.indexOf(timeTo) : ALL_SLOTS.length - 1
-      const rows = ALL_SLOTS.slice(fromIdx, toIdx + 1).map(t => ({
-        date,
-        time: t,
-        reason: reason.trim() || null,
-      }))
-      await supabase.from('blocked_slots').insert(rows)
-    }
-
+    await supabase.from('blocked_slots').insert({
+      date,
+      time_from: timeFrom || null,
+      time_to: timeFrom && timeTo ? timeTo : null,
+      reason: reason.trim() || null,
+    })
     setSaving(false)
     setDate('')
     setTimeFrom('')
@@ -186,9 +180,7 @@ const ClosuresSection = () => {
             ) : closures.map(c => (
               <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{fmtDate(c.date)}</td>
-                <td className="px-4 py-3 text-sm font-sans text-foreground">
-                  {c.time ? normTime(c.time) : <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>}
-                </td>
+                <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{fmtTimeRange(c)}</td>
                 <td className="px-4 py-3 text-sm font-sans text-muted-foreground">{c.reason ?? '—'}</td>
                 <td className="px-4 py-3">
                   <button

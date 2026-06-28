@@ -107,7 +107,7 @@ const ReservationPage = () => {
     setLoadingSlots(true)
     Promise.all([
       supabase.rpc('get_slot_counts', { check_date: date }),
-      supabase.from('blocked_slots').select('time').eq('date', date),
+      supabase.from('blocked_slots').select('time_from, time_to').eq('date', date),
     ]).then(([slotRes, blockedRes]) => {
       setLoadingSlots(false)
 
@@ -121,12 +121,18 @@ const ReservationPage = () => {
       }
 
       if (!blockedRes.error) {
-        const rows = (blockedRes.data ?? []) as { time: string | null }[]
-        const fullDay = rows.some(r => r.time === null)
+        const rows = (blockedRes.data ?? []) as { time_from: string | null; time_to: string | null }[]
+        const fullDay = rows.some(r => r.time_from === null)
         setDayBlocked(fullDay)
-        const times = new Set<string>(rows.filter(r => r.time !== null).map(r => (r.time as string).substring(0, 5)))
-        setBlockedTimes(times)
-        if (fullDay || (time && times.has(time))) setTime('')
+        // Expand each range to the concrete slots it covers
+        const ranges = rows.filter(r => r.time_from !== null)
+        const blocked = new Set<string>(
+          SLOTS_THU_SAT.filter(s =>
+            ranges.some(r => s >= r.time_from! && (r.time_to === null || s <= r.time_to))
+          )
+        )
+        setBlockedTimes(blocked)
+        if (fullDay || (time && blocked.has(time))) setTime('')
       }
     })
   }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
