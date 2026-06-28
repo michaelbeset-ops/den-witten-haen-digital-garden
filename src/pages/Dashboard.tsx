@@ -33,13 +33,20 @@ const StatusBadge = ({ status }: { status: Reservation['status'] }) => {
   return <span className={`text-xs font-sans font-medium px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>
 }
 
+// All possible time slots (Thu–Sat range covers Mon–Wed too)
+const ALL_SLOTS = [
+  '10:00','10:30','11:00','11:30','12:00','12:30',
+  '13:00','13:30','14:00','14:30','15:00','15:30','16:00',
+]
+
 // ─── ClosuresSection ──────────────────────────────────────────────────────────
 
 const ClosuresSection = () => {
   const [closures, setClosures] = useState<BlockedSlot[]>([])
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
+  const [timeFrom, setTimeFrom] = useState('')
+  const [timeTo, setTimeTo] = useState('')
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -50,6 +57,7 @@ const ClosuresSection = () => {
       .from('blocked_slots')
       .select('*')
       .order('date', { ascending: true })
+      .order('time', { ascending: true, nullsFirst: true })
     setLoading(false)
     setClosures((data as BlockedSlot[]) ?? [])
   }, [])
@@ -60,14 +68,26 @@ const ClosuresSection = () => {
     e.preventDefault()
     if (!date) return
     setSaving(true)
-    await supabase.from('blocked_slots').insert({
-      date,
-      time: time ? normTime(time) : null,  // store as HH:MM, never HH:MM:SS
-      reason: reason.trim() || null,
-    })
+
+    if (!timeFrom) {
+      // Whole day
+      await supabase.from('blocked_slots').insert({ date, time: null, reason: reason.trim() || null })
+    } else {
+      // Range: from timeFrom to timeTo (or end of day if timeTo is empty)
+      const fromIdx = ALL_SLOTS.indexOf(timeFrom)
+      const toIdx = timeTo ? ALL_SLOTS.indexOf(timeTo) : ALL_SLOTS.length - 1
+      const rows = ALL_SLOTS.slice(fromIdx, toIdx + 1).map(t => ({
+        date,
+        time: t,
+        reason: reason.trim() || null,
+      }))
+      await supabase.from('blocked_slots').insert(rows)
+    }
+
     setSaving(false)
     setDate('')
-    setTime('')
+    setTimeFrom('')
+    setTimeTo('')
     setReason('')
     fetchClosures()
   }
@@ -79,6 +99,8 @@ const ClosuresSection = () => {
     fetchClosures()
   }
 
+  const toSlots = timeFrom ? ALL_SLOTS.slice(ALL_SLOTS.indexOf(timeFrom)) : []
+
   return (
     <div className="p-6 max-w-2xl">
       <h2 className="font-serif text-2xl text-foreground mb-6">Sluitingen</h2>
@@ -86,34 +108,45 @@ const ClosuresSection = () => {
       <div className="bg-card border border-border rounded-lg p-5 mb-6">
         <h3 className="font-sans text-sm font-semibold text-foreground mb-1">Dag of tijdslot sluiten</h3>
         <p className="text-xs text-muted-foreground font-sans mb-4">
-          Laat het tijdveld leeg om een <strong>hele dag</strong> te blokkeren (bijv. feestdagen, bruiloften).
-          Vul een tijd in om alleen dat tijdslot te sluiten.
+          Laat "Van" leeg om een <strong>hele dag</strong> te blokkeren.
+          Kies "Van" zonder "Tot" om alles vanaf dat tijdstip te sluiten.
         </p>
         <form onSubmit={handleAdd} className="space-y-3">
+          <div>
+            <label className="text-xs font-sans text-muted-foreground mb-1 block">Datum *</label>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              required
+              className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-xs font-sans text-muted-foreground mb-1 block">Datum *</label>
-              <input
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                required
-                className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-sans text-muted-foreground mb-1 block">Tijdslot (optioneel)</label>
+              <label className="text-xs font-sans text-muted-foreground mb-1 block">Van tijdslot</label>
               <select
-                value={time}
-                onChange={e => setTime(e.target.value)}
+                value={timeFrom}
+                onChange={e => { setTimeFrom(e.target.value); setTimeTo('') }}
                 className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">— Hele dag —</option>
-                {['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'].map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+                {ALL_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            {timeFrom && (
+              <div className="flex-1">
+                <label className="text-xs font-sans text-muted-foreground mb-1 block">Tot tijdslot</label>
+                <select
+                  value={timeTo}
+                  onChange={e => setTimeTo(e.target.value)}
+                  className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">— Einde dag —</option>
+                  {toSlots.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            )}
           </div>
           <div>
             <label className="text-xs font-sans text-muted-foreground mb-1 block">Reden (optioneel)</label>
