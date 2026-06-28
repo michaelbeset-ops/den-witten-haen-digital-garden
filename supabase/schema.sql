@@ -104,10 +104,10 @@ begin
     raise exception 'Op deze dag zijn wij gesloten' using errcode = 'P0002';
   end if;
 
-  -- Check if the specific time slot is blocked
+  -- Check if the specific time slot is blocked (left() guards against HH:MM:SS in old data)
   if exists (
     select 1 from blocked_slots
-    where date = p_date and time = p_time
+    where date = p_date and left(time, 5) = left(p_time, 5)
   ) then
     raise exception 'Dit tijdslot is gesloten' using errcode = 'P0002';
   end if;

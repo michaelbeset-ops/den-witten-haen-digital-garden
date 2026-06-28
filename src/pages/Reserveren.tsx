@@ -124,7 +124,7 @@ const ReservationPage = () => {
         const rows = (blockedRes.data ?? []) as { time: string | null }[]
         const fullDay = rows.some(r => r.time === null)
         setDayBlocked(fullDay)
-        const times = new Set<string>(rows.filter(r => r.time !== null).map(r => r.time as string))
+        const times = new Set<string>(rows.filter(r => r.time !== null).map(r => (r.time as string).substring(0, 5)))
         setBlockedTimes(times)
         if (fullDay || (time && times.has(time))) setTime('')
       }

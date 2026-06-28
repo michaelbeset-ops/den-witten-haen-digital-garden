@@ -6,20 +6,13 @@ import { sendCancellationEmail } from '@/lib/email'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type ActionLoading = Record<string, 'annuleren' | null>
-type View = 'reserveringen' | 'gebruikers' | 'sluitingen'
+type View = 'reserveringen' | 'sluitingen'
 
 interface BlockedSlot {
   id: string
   date: string
   time: string | null
   reason: string | null
-}
-
-interface AdminUser {
-  id: string
-  email: string
-  created_at: string
-  last_sign_in_at: string | null
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -29,8 +22,8 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 const fmtDate = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
 
-const fmtDateTime = (iso: string) =>
-  new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })
+// Normalize HH:MM:SS → HH:MM (browser time inputs sometimes include seconds)
+const normTime = (t: string) => t.substring(0, 5)
 
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
 
@@ -38,160 +31,6 @@ const StatusBadge = ({ status }: { status: Reservation['status'] }) => {
   const styles = { aangevraagd: 'bg-yellow-100 text-yellow-800', bevestigd: 'bg-green-100 text-green-800', geannuleerd: 'bg-gray-100 text-gray-500' }
   const labels = { aangevraagd: 'Aangevraagd', bevestigd: 'Bevestigd', geannuleerd: 'Geannuleerd' }
   return <span className={`text-xs font-sans font-medium px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>
-}
-
-// ─── manage-users helper ──────────────────────────────────────────────────────
-
-const callManageUsers = async (body: object) => {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError) console.error('[manage-users] session error:', sessionError)
-  const token = session?.access_token ?? ''
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`
-  console.log('[manage-users] calling', url, 'token?', !!token)
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-  console.log('[manage-users] status', res.status)
-  return res
-}
-
-// ─── UsersSection ─────────────────────────────────────────────────────────────
-
-const UsersSection = () => {
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviting, setInviting] = useState(false)
-  const [inviteError, setInviteError] = useState('')
-  const [inviteSuccess, setInviteSuccess] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await callManageUsers({ action: 'list' })
-      const data = await res.json()
-      if (!res.ok) { setError('Gebruikers konden niet worden geladen.'); return }
-      setUsers((data as { users: AdminUser[] }).users ?? [])
-    } catch {
-      setError('Gebruikers konden niet worden geladen.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { fetchUsers() }, [fetchUsers])
-
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setInviteError('')
-    setInviteSuccess(false)
-    setInviting(true)
-    try {
-      const res = await callManageUsers({ action: 'create', email: inviteEmail.trim() })
-      if (!res.ok) { setInviteError('Kon gebruiker niet aanmaken. Controleer het e-mailadres.'); return }
-      setInviteSuccess(true)
-      setInviteEmail('')
-      fetchUsers()
-    } catch {
-      setInviteError('Kon gebruiker niet aanmaken. Controleer het e-mailadres.')
-    } finally {
-      setInviting(false)
-    }
-  }
-
-  const handleDelete = async (userId: string) => {
-    if (!confirm('Weet u zeker dat u deze gebruiker wilt verwijderen?')) return
-    setDeletingId(userId)
-    try {
-      await callManageUsers({ action: 'delete', userId })
-    } finally {
-      setDeletingId(null)
-      fetchUsers()
-    }
-  }
-
-  return (
-    <div className="p-6 max-w-2xl">
-      <h2 className="font-serif text-2xl text-foreground mb-6">Gebruikers</h2>
-
-      <div className="bg-card border border-border rounded-lg p-5 mb-6">
-        <h3 className="font-sans text-sm font-semibold text-foreground mb-1">Gebruiker toevoegen</h3>
-        <p className="text-xs text-muted-foreground font-sans mb-4">
-          Voeg het e-mailadres in. De nieuwe gebruiker kan daarna via "Wachtwoord vergeten" op de loginpagina een wachtwoord instellen.
-        </p>
-        {inviteSuccess && (
-          <div className="mb-3 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-xs font-sans">
-            Gebruiker aangemaakt. Stuur hen naar de loginpagina om via "Wachtwoord vergeten" een wachtwoord in te stellen.
-          </div>
-        )}
-        {inviteError && (
-          <div className="mb-3 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs font-sans">{inviteError}</div>
-        )}
-        <form onSubmit={handleInvite} className="flex gap-3">
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={e => setInviteEmail(e.target.value)}
-            placeholder="naam@voorbeeld.nl"
-            required
-            className="flex-1 font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            type="submit"
-            disabled={inviting}
-            className="font-sans text-sm font-medium px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors whitespace-nowrap"
-          >
-            {inviting ? 'Bezig...' : 'Toevoegen'}
-          </button>
-        </form>
-      </div>
-
-      {error && <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm font-sans">{error}</div>}
-      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3">E-mail</th>
-              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3">Aangemaakt</th>
-              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3">Laatste login</th>
-              <th className="text-xs font-sans uppercase text-muted-foreground text-left px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm font-sans text-muted-foreground">Laden…</td></tr>
-            ) : users.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm font-sans text-muted-foreground">Geen gebruikers.</td></tr>
-            ) : users.map(u => (
-              <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                <td className="px-4 py-3 text-sm font-sans text-foreground">{u.email}</td>
-                <td className="px-4 py-3 text-sm font-sans text-muted-foreground whitespace-nowrap">{fmtDateTime(u.created_at)}</td>
-                <td className="px-4 py-3 text-sm font-sans text-muted-foreground whitespace-nowrap">{u.last_sign_in_at ? fmtDateTime(u.last_sign_in_at) : '—'}</td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => handleDelete(u.id)}
-                    disabled={deletingId === u.id}
-                    className="text-xs font-sans font-medium px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-700 disabled:opacity-50 transition-colors"
-                  >
-                    {deletingId === u.id ? 'Bezig…' : 'Verwijderen'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
 }
 
 // ─── ClosuresSection ──────────────────────────────────────────────────────────
@@ -223,7 +62,7 @@ const ClosuresSection = () => {
     setSaving(true)
     await supabase.from('blocked_slots').insert({
       date,
-      time: time || null,
+      time: time ? normTime(time) : null,  // store as HH:MM, never HH:MM:SS
       reason: reason.trim() || null,
     })
     setSaving(false)
@@ -264,13 +103,16 @@ const ClosuresSection = () => {
             </div>
             <div className="flex-1">
               <label className="text-xs font-sans text-muted-foreground mb-1 block">Tijdslot (optioneel)</label>
-              <input
-                type="time"
+              <select
                 value={time}
                 onChange={e => setTime(e.target.value)}
-                step="1800"
                 className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+              >
+                <option value="">— Hele dag —</option>
+                {['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div>
@@ -311,7 +153,9 @@ const ClosuresSection = () => {
             ) : closures.map(c => (
               <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{fmtDate(c.date)}</td>
-                <td className="px-4 py-3 text-sm font-sans text-foreground">{c.time ?? <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>}</td>
+                <td className="px-4 py-3 text-sm font-sans text-foreground">
+                  {c.time ? normTime(c.time) : <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>}
+                </td>
                 <td className="px-4 py-3 text-sm font-sans text-muted-foreground">{c.reason ?? '—'}</td>
                 <td className="px-4 py-3">
                   <button
@@ -396,12 +240,6 @@ const Dashboard = () => {
             Reserveringen
           </button>
           <button
-            onClick={() => setView('gebruikers')}
-            className={`text-sm font-sans font-medium text-left px-3 py-2 rounded transition-colors ${view === 'gebruikers' ? 'bg-primary-foreground/10 opacity-100' : 'opacity-60 hover:opacity-90'}`}
-          >
-            Gebruikers
-          </button>
-          <button
             onClick={() => setView('sluitingen')}
             className={`text-sm font-sans font-medium text-left px-3 py-2 rounded transition-colors ${view === 'sluitingen' ? 'bg-primary-foreground/10 opacity-100' : 'opacity-60 hover:opacity-90'}`}
           >
@@ -416,7 +254,7 @@ const Dashboard = () => {
       </aside>
 
       <main className="flex-1 overflow-auto">
-        {view === 'sluitingen' ? <ClosuresSection /> : view === 'gebruikers' ? <UsersSection /> : (
+        {view === 'sluitingen' ? <ClosuresSection /> : (
           <div className="p-6">
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <h2 className="font-serif text-2xl text-foreground">Reserveringen</h2>
