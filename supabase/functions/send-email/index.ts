@@ -181,6 +181,8 @@ Deno.serve(async (req: Request) => {
 
   const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'denwittenhaen@philadelphia.nl'
   const FROM_NAME = 'Den Witten Haen'
+  console.log('[send-email] FROM_EMAIL secret raw value:', JSON.stringify(Deno.env.get('FROM_EMAIL')))
+  console.log('[send-email] using sender:', FROM_EMAIL)
 
   const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
