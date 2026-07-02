@@ -176,7 +176,7 @@ const ReservationPopup = () => {
           role="dialog"
           aria-modal="true"
           aria-label="Reservering maken"
-          className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-50 w-full sm:w-[420px] max-h-[90vh] bg-card border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col"
+          className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 w-full sm:w-[420px] h-full sm:h-auto sm:max-h-[90vh] bg-card border-0 sm:border border-border rounded-none sm:rounded-2xl shadow-2xl flex flex-col"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
