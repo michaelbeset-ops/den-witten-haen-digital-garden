@@ -322,17 +322,24 @@ const ReservationPage = () => {
             {/* Datum */}
             <div>
               <Label htmlFor="date">Datum *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                min={tomorrowStr()}
-                onChange={(e) => {
-                  setDate(e.target.value)
-                  setTime('')
-                }}
-                aria-invalid={!!fieldErrors.date}
-              />
+              <div className="relative">
+                <Input
+                  id="date"
+                  type="date"
+                  value={date}
+                  min={tomorrowStr()}
+                  onChange={(e) => {
+                    setDate(e.target.value)
+                    setTime('')
+                  }}
+                  aria-invalid={!!fieldErrors.date}
+                />
+                {!date && (
+                  <span className="date-placeholder-ios pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">
+                    dd-mm-jjjj
+                  </span>
+                )}
+              </div>
               {fieldErrors.date && (
                 <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.date}</p>
               )}
