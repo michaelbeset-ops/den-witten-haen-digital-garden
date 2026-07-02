@@ -140,7 +140,7 @@ function buildCancellationHtml(name: string, date: string, time: string): string
       Wilt u een nieuwe reservering maken?
     </p>
     <div style="text-align:center;margin-bottom:40px;">
-      <a href="https://michaelbeset-ops.github.io/den-witten-haen-digital-garden/reserveren"
+      <a href="https://denwittenhaen.com/reserveren"
          style="display:inline-block;background:#5a7a5e;color:#fffdf8;font-family:Georgia,serif;font-size:14px;letter-spacing:1px;text-decoration:none;padding:14px 32px;border-radius:6px;">
         Opnieuw reserveren
       </a>
@@ -181,6 +181,8 @@ Deno.serve(async (req: Request) => {
 
   const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'denwittenhaen@philadelphia.nl'
   const FROM_NAME = 'Den Witten Haen'
+  console.log('[send-email] FROM_EMAIL secret raw value:', JSON.stringify(Deno.env.get('FROM_EMAIL')))
+  console.log('[send-email] using sender:', FROM_EMAIL)
 
   const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
