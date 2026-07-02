@@ -208,13 +208,20 @@ const ReservationPopup = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="pop-date">Datum *</Label>
-                      <Input
-                        id="pop-date"
-                        type="date"
-                        value={date}
-                        min={tomorrowStr()}
-                        onChange={e => { setDate(e.target.value); setTime('') }}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="pop-date"
+                          type="date"
+                          value={date}
+                          min={tomorrowStr()}
+                          onChange={e => { setDate(e.target.value); setTime('') }}
+                        />
+                        {!date && (
+                          <span className="date-placeholder-ios pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">
+                            dd-mm-jjjj
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="pop-guests">Personen *</Label>
