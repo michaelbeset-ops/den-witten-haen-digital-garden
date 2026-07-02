@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { CalendarDays, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +41,7 @@ const tomorrowStr = () => {
 type SlotCounts = Record<string, number>
 
 const ReservationPopup = () => {
+  const location = useLocation()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -123,6 +125,10 @@ const ReservationPopup = () => {
     }
     sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: parseInt(guests, 10) })
     setSuccess(true)
+  }
+
+  if (location.pathname.replace(/\/+$/, '').endsWith('/reserveren')) {
+    return null
   }
 
   return (
