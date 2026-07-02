@@ -237,11 +237,11 @@ const ReservationPage = () => {
 
   if (success) {
     return (
-      <main className="pt-24 pb-20">
+      <main className="pt-24 pb-10 sm:pb-20">
         <div className="container mx-auto px-4 max-w-lg">
-          <div className="bg-card border border-border rounded-lg p-8 shadow-sm text-center">
-            <h1 className="font-serif text-3xl mb-4 text-foreground">Reservering ontvangen</h1>
-            <p className="font-sans text-base text-muted-foreground mb-6">
+          <div className="bg-card border border-border rounded-lg p-5 sm:p-8 shadow-sm text-center">
+            <h1 className="font-serif text-2xl sm:text-3xl mb-3 sm:mb-4 text-foreground">Reservering ontvangen</h1>
+            <p className="font-sans text-base text-muted-foreground mb-5 sm:mb-6">
               Bedankt voor uw reservering! U ontvangt een bevestiging per e-mail.
             </p>
             <Button variant="default" onClick={() => setSuccess(false)}>
@@ -254,11 +254,11 @@ const ReservationPage = () => {
   }
 
   return (
-    <main className="pt-24 pb-20">
+    <main className="pt-24 pb-10 sm:pb-20">
       <div className="container mx-auto px-4 max-w-lg">
-        <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
-          <h1 className="font-serif text-3xl mb-2 text-foreground">Reserveren</h1>
-          <p className="font-sans text-sm text-muted-foreground mb-6">
+        <div className="bg-card border border-border rounded-lg p-5 sm:p-8 shadow-sm">
+          <h1 className="font-serif text-2xl sm:text-3xl mb-1.5 sm:mb-2 text-foreground">Reserveren</h1>
+          <p className="font-sans text-sm text-muted-foreground mb-4 sm:mb-6">
             Vul het formulier in en wij bevestigen uw reservering per e-mail.
           </p>
 
@@ -268,7 +268,7 @@ const ReservationPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5" noValidate>
             {/* Naam */}
             <div>
               <Label htmlFor="name">Naam *</Label>
@@ -319,31 +319,57 @@ const ReservationPage = () => {
               )}
             </div>
 
-            {/* Datum */}
-            <div>
-              <Label htmlFor="date">Datum *</Label>
-              <div className="relative">
-                <Input
-                  id="date"
-                  type="date"
-                  value={date}
-                  min={tomorrowStr()}
-                  onChange={(e) => {
-                    setDate(e.target.value)
-                    setTime('')
-                  }}
-                  aria-invalid={!!fieldErrors.date}
-                />
-                {!date && (
-                  <span className="date-placeholder-ios pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">
-                    dd-mm-jjjj
-                  </span>
+            {/* Datum + Aantal personen */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="date">Datum *</Label>
+                <div className="relative">
+                  <Input
+                    id="date"
+                    type="date"
+                    value={date}
+                    min={tomorrowStr()}
+                    onChange={(e) => {
+                      setDate(e.target.value)
+                      setTime('')
+                    }}
+                    aria-invalid={!!fieldErrors.date}
+                  />
+                  {!date && (
+                    <span className="date-placeholder-ios pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">
+                      dd-mm-jjjj
+                    </span>
+                  )}
+                </div>
+                {fieldErrors.date && (
+                  <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.date}</p>
                 )}
               </div>
-              {fieldErrors.date && (
-                <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.date}</p>
-              )}
+
+              {/* Aantal personen */}
+              <div>
+                <Label htmlFor="guests">Personen *</Label>
+                <Input
+                  id="guests"
+                  type="number"
+                  value={guests}
+                  onChange={(e) => setGuests(e.target.value)}
+                  min={1}
+                  max={20}
+                  placeholder="Aantal"
+                  aria-invalid={!!fieldErrors.guests}
+                />
+                {fieldErrors.guests && (
+                  <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.guests}</p>
+                )}
+              </div>
             </div>
+            {!fieldErrors.guests && (
+              <p className="text-xs text-muted-foreground font-sans">
+                Voor meer dan {MAX_GUESTS_PER_RESERVATION} personen? Bel ons op{' '}
+                <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
+              </p>
+            )}
 
             {/* Tijdslot */}
             <div>
@@ -383,29 +409,6 @@ const ReservationPage = () => {
               )}
               {fieldErrors.time && (
                 <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.time}</p>
-              )}
-            </div>
-
-            {/* Aantal personen */}
-            <div>
-              <Label htmlFor="guests">Aantal personen *</Label>
-              <Input
-                id="guests"
-                type="number"
-                value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                min={1}
-                max={20}
-                placeholder="Aantal"
-                aria-invalid={!!fieldErrors.guests}
-              />
-              {fieldErrors.guests ? (
-                <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.guests}</p>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground font-sans">
-                  Voor meer dan {MAX_GUESTS_PER_RESERVATION} personen? Bel ons op{' '}
-                  <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
-                </p>
               )}
             </div>
 
