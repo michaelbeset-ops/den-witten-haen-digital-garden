@@ -63,10 +63,28 @@ const ReservationPopup = () => {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // Lock body scroll when open
+  // Lock body scroll when open. Plain `overflow: hidden` on <body> is
+  // unreliable on iOS Safari (the page behind the modal still scrolls /
+  // fights the modal's own touch scrolling), so we pin the body in place
+  // instead and restore the scroll position on close.
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (!open) return
+    const scrollY = window.scrollY
+    const { style } = document.body
+    const prev = { position: style.position, top: style.top, left: style.left, right: style.right, width: style.width }
+    style.position = 'fixed'
+    style.top = `-${scrollY}px`
+    style.left = '0'
+    style.right = '0'
+    style.width = '100%'
+    return () => {
+      style.position = prev.position
+      style.top = prev.top
+      style.left = prev.left
+      style.right = prev.right
+      style.width = prev.width
+      window.scrollTo(0, scrollY)
+    }
   }, [open])
 
   // Slot availability
