@@ -18,8 +18,8 @@ const TeamPage = () => (
         Iedereen draagt op zijn eigen manier bij aan de warme sfeer.
       </p>
 
-      <div className="mb-12 rounded-xl overflow-hidden border border-border shadow-sm">
-        <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-72 object-cover" />
+      <div className="mb-12 rounded-xl overflow-hidden border border-border shadow-sm max-w-sm mx-auto">
+        <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-auto" />
       </div>
 
       <div className="space-y-6 mb-12">

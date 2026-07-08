@@ -13,22 +13,30 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
-import { sendConfirmationEmail } from '@/lib/email'
+import { sendConfirmationEmail, sendGroupRequestEmail } from '@/lib/email'
 
-const SLOTS_MON_WED = [
+type ReservationType = 'lunch' | 'high_tea'
+const RESERVATION_TYPES: { value: ReservationType; label: string }[] = [
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'high_tea', label: 'High tea' },
+]
+
+// Ma t/m vr: geopend 10:00 – 16:00 (laatste tijdslot 15:00)
+const SLOTS_WEEKDAY = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
   '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
 ]
-const SLOTS_THU_SAT = [
+// Za: geopend 10:00 – 17:00 (laatste tijdslot 16:00)
+const SLOTS_SATURDAY = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
   '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
 ]
 function getSlotsForDate(dateStr: string): string[] {
-  if (!dateStr) return SLOTS_MON_WED
+  if (!dateStr) return SLOTS_WEEKDAY
   const day = new Date(dateStr + 'T12:00:00').getDay()
   if (day === 0) return []
-  if (day >= 4) return SLOTS_THU_SAT
-  return SLOTS_MON_WED
+  if (day === 6) return SLOTS_SATURDAY
+  return SLOTS_WEEKDAY
 }
 const MAX_GUESTS_PER_SLOT = 48
 const MAX_GUESTS_PER_RESERVATION = 8
@@ -50,11 +58,16 @@ const ReservationPopup = () => {
   const [time, setTime] = useState('')
   const [guests, setGuests] = useState('')
   const [message, setMessage] = useState('')
+  const [reservationType, setReservationType] = useState<ReservationType>('lunch')
   const [slotCounts, setSlotCounts] = useState<SlotCounts>({})
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [successType, setSuccessType] = useState<'reservation' | 'group'>('reservation')
   const [error, setError] = useState('')
+
+  const guestsNum = parseInt(guests, 10)
+  const isGroup = !isNaN(guestsNum) && guestsNum > MAX_GUESTS_PER_RESERVATION
 
   // Close on Escape
   useEffect(() => {
@@ -104,7 +117,7 @@ const ReservationPopup = () => {
 
   const reset = () => {
     setName(''); setEmail(''); setPhone(''); setDate('')
-    setTime(''); setGuests(''); setMessage('')
+    setTime(''); setGuests(''); setMessage(''); setReservationType('lunch')
     setSlotCounts({}); setError(''); setSuccess(false)
   }
 
@@ -113,13 +126,31 @@ const ReservationPopup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!name || !email || !phone || !date || !time || !guests) {
-      setError('Vul alle verplichte velden in.')
+
+    // Groepen > 8 personen: aanvraag naar het restaurant mailen i.p.v. direct boeken.
+    if (isGroup) {
+      if (!name || !email || !phone || !date || !guests) {
+        setError('Vul alle verplichte velden in.')
+        return
+      }
+      setSubmitting(true)
+      await sendGroupRequestEmail({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        date,
+        guests: guestsNum,
+        message: message.trim() || undefined,
+        reservationType,
+      })
+      setSubmitting(false)
+      setSuccessType('group')
+      setSuccess(true)
       return
     }
-    const guestsNum = parseInt(guests, 10)
-    if (guestsNum > MAX_GUESTS_PER_RESERVATION) {
-      setError(`Voor groepen van meer dan ${MAX_GUESTS_PER_RESERVATION} personen kunt u niet online reserveren — bel ons op ${PHONE_NUMBER}.`)
+
+    if (!name || !email || !phone || !date || !time || !guests) {
+      setError('Vul alle verplichte velden in.')
       return
     }
     setSubmitting(true)
@@ -131,6 +162,7 @@ const ReservationPopup = () => {
       p_time: time,
       p_guests: parseInt(guests, 10),
       p_message: message.trim() || null,
+      p_type: reservationType,
     })
     setSubmitting(false)
     if (rpcError || !newId) {
@@ -141,7 +173,8 @@ const ReservationPopup = () => {
       }
       return
     }
-    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: parseInt(guests, 10) })
+    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: parseInt(guests, 10), reservationType })
+    setSuccessType('reservation')
     setSuccess(true)
   }
 
@@ -202,7 +235,9 @@ const ReservationPopup = () => {
                 </div>
                 <h3 className="font-serif text-lg mb-2">Bedankt!</h3>
                 <p className="text-sm text-muted-foreground font-sans leading-relaxed">
-                  Uw reservering is ontvangen. U ontvangt een bevestiging per e-mail.
+                  {successType === 'group'
+                    ? 'Uw aanvraag is ontvangen. Wij nemen zo snel mogelijk contact met u op om de details door te nemen.'
+                    : 'Uw reservering is ontvangen. U ontvangt een bevestiging per e-mail.'}
                 </p>
                 <Button className="mt-6 w-full" variant="outline" onClick={handleClose}>
                   Sluiten
@@ -228,6 +263,30 @@ const ReservationPopup = () => {
                   <div>
                     <Label htmlFor="pop-phone">Telefoonnummer *</Label>
                     <Input id="pop-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="06 – 00 00 00 00" />
+                  </div>
+                  <div>
+                    <Label>Wat wilt u reserveren? *</Label>
+                    <div className="flex gap-6 mt-2">
+                      {RESERVATION_TYPES.map(opt => (
+                        <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="pop-type"
+                            value={opt.value}
+                            checked={reservationType === opt.value}
+                            onChange={() => setReservationType(opt.value)}
+                            className="accent-primary"
+                          />
+                          <span className="text-sm font-sans text-foreground">{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {reservationType === 'high_tea' && (
+                      <div className="mt-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs font-sans leading-relaxed">
+                        <strong>Annuleren high tea:</strong> tot uiterlijk 48 uur van tevoren. Daarna
+                        wordt de betaling alsnog in rekening gebracht.
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -257,13 +316,16 @@ const ReservationPopup = () => {
                         min={1} max={20}
                         placeholder="Aantal"
                       />
-                      {parseInt(guests, 10) > MAX_GUESTS_PER_RESERVATION && (
-                        <p className="mt-1 text-xs text-destructive font-sans">
-                          Bel ons op {PHONE_NUMBER} voor grote groepen.
-                        </p>
-                      )}
                     </div>
                   </div>
+                  {isGroup && (
+                    <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-foreground text-xs font-sans leading-relaxed">
+                      Voor groepen van meer dan {MAX_GUESTS_PER_RESERVATION} personen plannen wij de
+                      reservering persoonlijk in. Verstuur uw aanvraag, dan nemen wij contact met u op.
+                      Liever bellen? {PHONE_NUMBER}.
+                    </div>
+                  )}
+                  {!isGroup && (
                   <div>
                     <Label htmlFor="pop-time">Tijdslot *</Label>
                     <Select value={time} onValueChange={setTime} disabled={!date || loadingSlots}>
@@ -285,6 +347,7 @@ const ReservationPopup = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  )}
                   <div>
                     <Label htmlFor="pop-message">Opmerking</Label>
                     <Textarea
@@ -298,7 +361,7 @@ const ReservationPopup = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? 'Versturen...' : 'Reservering versturen'}
+                  {submitting ? 'Versturen...' : isGroup ? 'Groepsaanvraag versturen' : 'Reservering versturen'}
                 </Button>
               </form>
             )}
