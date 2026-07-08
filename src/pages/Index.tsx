@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Landmark, TreePine, Heart, Star, ChevronRight, ArrowRight } from "lucide-react";
 
 import heroImage from "@/assets/hero-interior.png";
-import gardenImage from "@/assets/garden-tuin.png";
+import heroImageMobile from "@/assets/hero-mobile.jpg";
+import terrasImage from "@/assets/buiten-terras.jpg";
 import teamImage from "@/assets/team.png";
 
 const specialties = [
@@ -46,10 +47,16 @@ const Index = () => {
     <main>
       {/* Hero – sfeer */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* Staande sfeerfoto op mobiel, liggende interieurfoto op desktop */}
+        <img
+          src={heroImageMobile}
+          alt="Sfeervol gedekte tafel bij Den Witten Haen"
+          className="absolute inset-0 w-full h-full object-cover md:hidden"
+        />
         <img
           src={heroImage}
           alt="Sfeervolle interieur van Den Witten Haen"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover hidden md:block"
           width={1920}
           height={1080}
         />
@@ -176,12 +183,12 @@ const Index = () => {
           </div>
           <div className="rounded-lg overflow-hidden shadow-lg">
             <img
-              src={gardenImage}
-              alt="De tuin van Den Witten Haen"
+              src={terrasImage}
+              alt="Het buitenterras van Den Witten Haen"
               className="w-full h-80 object-cover"
               loading="lazy"
-              width={800}
-              height={600}
+              width={1600}
+              height={900}
             />
           </div>
         </div>
