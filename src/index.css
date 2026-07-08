@@ -63,3 +63,17 @@
     scroll-behavior: smooth;
   }
 }
+
+/* iOS Safari (and other iOS browsers, which all use WebKit) render an empty
+   <input type="date"> with no visible placeholder text, unlike Chromium/Firefox.
+   This overlay fills that gap; @supports scopes it to iOS only so it doesn't
+   double up with the native placeholder shown elsewhere. */
+.date-placeholder-ios {
+  display: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .date-placeholder-ios {
+    display: block;
+  }
+}

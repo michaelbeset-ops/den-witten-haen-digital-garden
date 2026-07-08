@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Menu, X } from 'lucide-react'
 import { supabase, type Reservation } from '@/lib/supabase'
 import { sendCancellationEmail } from '@/lib/email'
 
@@ -162,7 +163,8 @@ const ClosuresSection = () => {
         </form>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
@@ -196,6 +198,30 @@ const ClosuresSection = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <p className="text-center py-8 text-sm font-sans text-muted-foreground">Laden…</p>
+        ) : closures.length === 0 ? (
+          <p className="text-center py-8 text-sm font-sans text-muted-foreground">Geen sluitingen gepland.</p>
+        ) : closures.map(c => (
+          <div key={c.id} className="rounded-lg border border-border bg-card shadow-sm p-4">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <p className="font-serif text-lg text-foreground">{fmtDate(c.date)}</p>
+              <div>{fmtTimeRange(c)}</div>
+            </div>
+            {c.reason && <p className="text-sm font-sans text-muted-foreground mb-3">{c.reason}</p>}
+            <button
+              onClick={() => handleDelete(c.id)}
+              disabled={deletingId === c.id}
+              className="text-xs font-sans font-medium px-3 py-1.5 rounded bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-700 disabled:opacity-50 transition-colors"
+            >
+              {deletingId === c.id ? 'Bezig…' : 'Verwijderen'}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -205,6 +231,7 @@ const ClosuresSection = () => {
 const Dashboard = () => {
   const navigate = useNavigate()
   const [view, setView] = useState<View>('reserveringen')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [filterDate, setFilterDate] = useState(todayStr())
   const [allDates, setAllDates] = useState(false)
   const [reservations, setReservations] = useState<Reservation[]>([])
@@ -224,6 +251,28 @@ const Dashboard = () => {
   }, [filterDate, allDates])
 
   useEffect(() => { fetchReservations() }, [fetchReservations])
+
+  // Lock body scroll while the mobile menu is open (position: fixed, not
+  // `overflow: hidden`, since the latter is unreliable on iOS Safari).
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const scrollY = window.scrollY
+    const { style } = document.body
+    const prev = { position: style.position, top: style.top, left: style.left, right: style.right, width: style.width }
+    style.position = 'fixed'
+    style.top = `-${scrollY}px`
+    style.left = '0'
+    style.right = '0'
+    style.width = '100%'
+    return () => {
+      style.position = prev.position
+      style.top = prev.top
+      style.left = prev.left
+      style.right = prev.right
+      style.width = prev.width
+      window.scrollTo(0, scrollY)
+    }
+  }, [mobileMenuOpen])
 
   useEffect(() => {
     const channel = supabase
@@ -251,8 +300,54 @@ const Dashboard = () => {
   const colSpan = allDates ? 9 : 8
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <aside className="w-56 bg-foreground text-primary-foreground flex flex-col shrink-0">
+    <div className="flex flex-col md:flex-row md:h-screen bg-background md:overflow-hidden">
+      {/* Mobile top bar */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-foreground text-primary-foreground shrink-0">
+        <div>
+          <h1 className="font-serif text-lg leading-tight">Den Witten Haen</h1>
+          <p className="font-sans text-xs opacity-60 mt-0.5">Reserveringsbeheer</p>
+        </div>
+        <button onClick={() => setMobileMenuOpen(true)} aria-label="Menu openen" className="p-2">
+          <Menu size={22} />
+        </button>
+      </div>
+
+      {/* Mobile menu drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-foreground text-primary-foreground flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-primary-foreground/20">
+            <div>
+              <h1 className="font-serif text-lg leading-tight">Den Witten Haen</h1>
+              <p className="font-sans text-xs opacity-60 mt-0.5">Reserveringsbeheer</p>
+            </div>
+            <button onClick={() => setMobileMenuOpen(false)} aria-label="Sluiten" className="p-2">
+              <X size={22} />
+            </button>
+          </div>
+          <nav className="flex-1 p-4 flex flex-col gap-1">
+            <button
+              onClick={() => { setView('reserveringen'); setMobileMenuOpen(false) }}
+              className={`text-lg font-sans font-medium text-left px-3 py-3 rounded transition-colors ${view === 'reserveringen' ? 'bg-primary-foreground/10 opacity-100' : 'opacity-60 hover:opacity-90'}`}
+            >
+              Reserveringen
+            </button>
+            <button
+              onClick={() => { setView('sluitingen'); setMobileMenuOpen(false) }}
+              className={`text-lg font-sans font-medium text-left px-3 py-3 rounded transition-colors ${view === 'sluitingen' ? 'bg-primary-foreground/10 opacity-100' : 'opacity-60 hover:opacity-90'}`}
+            >
+              Sluitingen
+            </button>
+          </nav>
+          <div className="p-4 border-t border-primary-foreground/20">
+            <button onClick={handleLogout} className="w-full text-left text-sm font-sans opacity-70 hover:opacity-100 px-3 py-2 transition-opacity">
+              Uitloggen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-56 bg-foreground text-primary-foreground flex-col shrink-0">
         <div className="p-6 border-b border-primary-foreground/20">
           <h1 className="font-serif text-lg leading-tight">Den Witten Haen</h1>
           <p className="font-sans text-xs opacity-60 mt-1">Reserveringsbeheer</p>
@@ -278,7 +373,7 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 md:overflow-auto">
         {view === 'sluitingen' ? <ClosuresSection /> : (
           <div className="p-6">
             <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -312,7 +407,8 @@ const Dashboard = () => {
               <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm font-sans">{fetchError}</div>
             )}
 
-            <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
               <table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="border-b border-border">
@@ -347,12 +443,17 @@ const Dashboard = () => {
                         <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{r.phone}</td>
                         <td className="px-4 py-3 text-sm font-sans text-foreground text-center">{r.guests}</td>
                         <td className="px-4 py-3 text-sm font-sans text-muted-foreground max-w-[200px]">
+                          {r.reservation_type === 'high_tea' && (
+                            <span className="inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mr-1 mb-0.5 bg-rose-100 text-rose-800">
+                              High tea
+                            </span>
+                          )}
                           {r.seating_preference && (
                             <span className={`inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mr-1 mb-0.5 ${r.seating_preference === 'buiten' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}`}>
                               {r.seating_preference.charAt(0).toUpperCase() + r.seating_preference.slice(1)}
                             </span>
                           )}
-                          <span className="truncate block">{r.message || (r.seating_preference ? '' : '—')}</span>
+                          <span className="truncate block">{r.message || (r.seating_preference || r.reservation_type === 'high_tea' ? '' : '—')}</span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3">
@@ -371,6 +472,56 @@ const Dashboard = () => {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {loadingData ? (
+                <p className="text-center py-10 text-sm font-sans text-muted-foreground">Laden…</p>
+              ) : reservations.length === 0 ? (
+                <p className="text-center py-10 text-sm font-sans text-muted-foreground">
+                  {allDates ? 'Nog geen reserveringen.' : `Geen reserveringen voor ${fmtDate(filterDate)}.`}
+                </p>
+              ) : reservations.map(r => {
+                const busy = actionLoading[r.id]
+                return (
+                  <div key={r.id} className="rounded-lg border border-border bg-card shadow-sm p-4">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <p className="font-serif text-lg text-foreground leading-tight">{r.name}</p>
+                        <p className="text-sm font-sans text-muted-foreground mt-0.5">
+                          {allDates ? `${fmtDate(r.date)} · ` : ''}{r.time} · {r.guests} {r.guests === 1 ? 'persoon' : 'personen'}
+                        </p>
+                      </div>
+                      <StatusBadge status={r.status} />
+                    </div>
+                    <div className="space-y-1 text-sm font-sans mb-3">
+                      <p><a href={`mailto:${r.email}`} className="text-primary hover:underline break-all">{r.email}</a></p>
+                      <p className="text-muted-foreground">{r.phone}</p>
+                      {r.reservation_type === 'high_tea' && (
+                        <span className="inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mt-1 mr-1 bg-rose-100 text-rose-800">
+                          High tea
+                        </span>
+                      )}
+                      {r.seating_preference && (
+                        <span className={`inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mt-1 ${r.seating_preference === 'buiten' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {r.seating_preference.charAt(0).toUpperCase() + r.seating_preference.slice(1)}
+                        </span>
+                      )}
+                      {r.message && <p className="text-muted-foreground">{r.message}</p>}
+                    </div>
+                    {r.status !== 'geannuleerd' && (
+                      <button
+                        onClick={() => handleAnnuleren(r)}
+                        disabled={!!busy}
+                        className="text-xs font-sans font-medium px-3 py-1.5 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

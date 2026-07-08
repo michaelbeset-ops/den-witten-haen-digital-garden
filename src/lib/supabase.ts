@@ -17,4 +17,5 @@ export type Reservation = {
   message?: string
   status: 'aangevraagd' | 'bevestigd' | 'geannuleerd'
   seating_preference?: 'binnen' | 'buiten' | null
+  reservation_type?: 'lunch' | 'high_tea' | null
 }

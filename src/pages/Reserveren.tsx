@@ -11,23 +11,31 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
-import { sendConfirmationEmail } from '@/lib/email'
+import { sendConfirmationEmail, sendGroupRequestEmail } from '@/lib/email'
 
-const SLOTS_MON_WED = [
+type ReservationType = 'lunch' | 'high_tea'
+const RESERVATION_TYPES: { value: ReservationType; label: string }[] = [
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'high_tea', label: 'High tea' },
+]
+
+// Ma t/m vr: geopend 10:00 – 16:00 (laatste tijdslot 15:00)
+const SLOTS_WEEKDAY = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
   '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
 ]
-const SLOTS_THU_SAT = [
+// Za: geopend 10:00 – 17:00 (laatste tijdslot 16:00)
+const SLOTS_SATURDAY = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
   '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
 ]
 
 function getSlotsForDate(dateStr: string): string[] {
-  if (!dateStr) return SLOTS_MON_WED
+  if (!dateStr) return SLOTS_WEEKDAY
   const day = new Date(dateStr + 'T12:00:00').getDay() // 0=zo, 1=ma … 6=za
   if (day === 0) return [] // zondag gesloten
-  if (day >= 4) return SLOTS_THU_SAT // do t/m za
-  return SLOTS_MON_WED // ma t/m wo
+  if (day === 6) return SLOTS_SATURDAY // zaterdag tot 17:00
+  return SLOTS_WEEKDAY // ma t/m vr tot 16:00
 }
 
 const MAX_GUESTS_PER_WINDOW = 48
@@ -85,6 +93,7 @@ const ReservationPage = () => {
   const [guests, setGuests] = useState('')
   const [message, setMessage] = useState('')
   const [seating, setSeating] = useState<'geen' | 'binnen' | 'buiten'>('geen')
+  const [reservationType, setReservationType] = useState<ReservationType>('lunch')
 
   const [slotCounts, setSlotCounts] = useState<SlotCounts>({})
   const [blockedTimes, setBlockedTimes] = useState<Set<string>>(new Set())
@@ -93,8 +102,14 @@ const ReservationPage = () => {
 
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [successType, setSuccessType] = useState<'reservation' | 'group'>('reservation')
   const [generalError, setGeneralError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+
+  const guestsNum = parseInt(guests, 10)
+  // Groepen boven 8 personen kunnen niet direct online boeken; zij sturen een
+  // aanvraag die naar het restaurant wordt gemaild.
+  const isGroup = !isNaN(guestsNum) && guestsNum > MAX_GUESTS_PER_RESERVATION
 
   // Fetch slot availability + blocked days/times
   useEffect(() => {
@@ -127,7 +142,7 @@ const ReservationPage = () => {
         // Expand each range to the concrete slots it covers
         const ranges = rows.filter(r => r.time_from !== null)
         const blocked = new Set<string>(
-          SLOTS_THU_SAT.filter(s =>
+          SLOTS_SATURDAY.filter(s =>
             ranges.some(r => s >= r.time_from! && (r.time_to === null || s <= r.time_to))
           )
         )
@@ -145,12 +160,14 @@ const ReservationPage = () => {
     if (!phone.trim()) errors.phone = 'Telefoonnummer is verplicht.'
     if (!date) errors.date = 'Datum is verplicht.'
     if (date && dayBlocked) errors.date = 'Op deze dag zijn wij gesloten.'
-    if (!time) errors.time = 'Tijdslot is verplicht.'
-    else if (blockedTimes.has(time)) errors.time = 'Dit tijdslot is gesloten.'
-    const guestsNum = parseInt(guests, 10)
     if (!guests) errors.guests = 'Aantal personen is verplicht.'
     else if (isNaN(guestsNum) || guestsNum < 1) errors.guests = 'Voer een geldig aantal in.'
-    else if (guestsNum > MAX_GUESTS_PER_RESERVATION) errors.guests = `Voor groepen van meer dan ${MAX_GUESTS_PER_RESERVATION} personen kunt u niet online reserveren — bel ons op ${PHONE_NUMBER}.`
+    // Een tijdslot is alleen nodig voor directe reserveringen (t/m 8 personen).
+    // Groepsaanvragen worden telefonisch/per e-mail ingepland.
+    if (!isGroup) {
+      if (!time) errors.time = 'Tijdslot is verplicht.'
+      else if (blockedTimes.has(time)) errors.time = 'Dit tijdslot is gesloten.'
+    }
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -160,6 +177,25 @@ const ReservationPage = () => {
     setGeneralError('')
 
     if (!validate()) return
+
+    // Groepen > 8 personen: aanvraag naar het restaurant mailen i.p.v. direct boeken.
+    if (isGroup) {
+      setSubmitting(true)
+      await sendGroupRequestEmail({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        date,
+        guests: guestsNum,
+        message: message.trim() || undefined,
+        reservationType,
+      })
+      setSubmitting(false)
+      setSuccessType('group')
+      setSuccess(true)
+      resetForm()
+      return
+    }
 
     // Double-check slot availability (race condition guard)
     // If the RPC fails for any reason, we skip the check and let the insert proceed.
@@ -195,6 +231,7 @@ const ReservationPage = () => {
       p_guests: parseInt(guests, 10),
       p_message: message.trim() || null,
       p_seating: seating === 'geen' ? null : seating,
+      p_type: reservationType,
     })
 
     if (insertError || !newId) {
@@ -215,12 +252,16 @@ const ReservationPage = () => {
       date,
       time,
       guests: parseInt(guests, 10),
+      reservationType,
     })
 
     setSubmitting(false)
+    setSuccessType('reservation')
     setSuccess(true)
+    resetForm()
+  }
 
-    // Reset form
+  const resetForm = () => {
     setName('')
     setEmail('')
     setPhone('')
@@ -229,6 +270,7 @@ const ReservationPage = () => {
     setGuests('')
     setMessage('')
     setSeating('geen')
+    setReservationType('lunch')
     setSlotCounts({})
     setBlockedTimes(new Set())
     setDayBlocked(false)
@@ -237,12 +279,16 @@ const ReservationPage = () => {
 
   if (success) {
     return (
-      <main className="pt-24 pb-20">
+      <main className="pt-24 pb-10 sm:pb-20">
         <div className="container mx-auto px-4 max-w-lg">
-          <div className="bg-card border border-border rounded-lg p-8 shadow-sm text-center">
-            <h1 className="font-serif text-3xl mb-4 text-foreground">Reservering ontvangen</h1>
-            <p className="font-sans text-base text-muted-foreground mb-6">
-              Bedankt voor uw reservering! U ontvangt een bevestiging per e-mail.
+          <div className="bg-card border border-border rounded-lg p-5 sm:p-8 shadow-sm text-center">
+            <h1 className="font-serif text-2xl sm:text-3xl mb-3 sm:mb-4 text-foreground">
+              {successType === 'group' ? 'Aanvraag ontvangen' : 'Reservering ontvangen'}
+            </h1>
+            <p className="font-sans text-base text-muted-foreground mb-5 sm:mb-6">
+              {successType === 'group'
+                ? 'Bedankt voor uw aanvraag! Wij hebben uw gegevens ontvangen en nemen zo snel mogelijk contact met u op om de details door te nemen.'
+                : 'Bedankt voor uw reservering! U ontvangt een bevestiging per e-mail.'}
             </p>
             <Button variant="default" onClick={() => setSuccess(false)}>
               Nieuwe reservering maken
@@ -254,11 +300,11 @@ const ReservationPage = () => {
   }
 
   return (
-    <main className="pt-24 pb-20">
+    <main className="pt-24 pb-10 sm:pb-20">
       <div className="container mx-auto px-4 max-w-lg">
-        <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
-          <h1 className="font-serif text-3xl mb-2 text-foreground">Reserveren</h1>
-          <p className="font-sans text-sm text-muted-foreground mb-6">
+        <div className="bg-card border border-border rounded-lg p-5 sm:p-8 shadow-sm">
+          <h1 className="font-serif text-2xl sm:text-3xl mb-1.5 sm:mb-2 text-foreground">Reserveren</h1>
+          <p className="font-sans text-sm text-muted-foreground mb-4 sm:mb-6">
             Vul het formulier in en wij bevestigen uw reservering per e-mail.
           </p>
 
@@ -268,7 +314,7 @@ const ReservationPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5" noValidate>
             {/* Naam */}
             <div>
               <Label htmlFor="name">Naam *</Label>
@@ -319,26 +365,96 @@ const ReservationPage = () => {
               )}
             </div>
 
-            {/* Datum */}
+            {/* Type reservering */}
             <div>
-              <Label htmlFor="date">Datum *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                min={tomorrowStr()}
-                onChange={(e) => {
-                  setDate(e.target.value)
-                  setTime('')
-                }}
-                aria-invalid={!!fieldErrors.date}
-              />
-              {fieldErrors.date && (
-                <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.date}</p>
+              <Label>Wat wilt u reserveren? *</Label>
+              <div className="flex gap-6 mt-2">
+                {RESERVATION_TYPES.map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="reservationType"
+                      value={opt.value}
+                      checked={reservationType === opt.value}
+                      onChange={() => setReservationType(opt.value)}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm font-sans text-foreground">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+              {reservationType === 'high_tea' && (
+                <div className="mt-3 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs font-sans leading-relaxed">
+                  <strong>Annuleringsvoorwaarde high tea:</strong> annuleren kan tot uiterlijk
+                  48 uur van tevoren. Bij annulering binnen 48 uur voor aanvang wordt de betaling
+                  alsnog in rekening gebracht.
+                </div>
               )}
             </div>
 
-            {/* Tijdslot */}
+            {/* Datum + Aantal personen */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="date">Datum *</Label>
+                <div className="relative">
+                  <Input
+                    id="date"
+                    type="date"
+                    value={date}
+                    min={tomorrowStr()}
+                    onChange={(e) => {
+                      setDate(e.target.value)
+                      setTime('')
+                    }}
+                    aria-invalid={!!fieldErrors.date}
+                  />
+                  {!date && (
+                    <span className="date-placeholder-ios pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">
+                      dd-mm-jjjj
+                    </span>
+                  )}
+                </div>
+                {fieldErrors.date && (
+                  <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.date}</p>
+                )}
+              </div>
+
+              {/* Aantal personen */}
+              <div>
+                <Label htmlFor="guests">Personen *</Label>
+                <Input
+                  id="guests"
+                  type="number"
+                  value={guests}
+                  onChange={(e) => setGuests(e.target.value)}
+                  min={1}
+                  max={20}
+                  placeholder="Aantal"
+                  aria-invalid={!!fieldErrors.guests}
+                />
+                {fieldErrors.guests && (
+                  <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.guests}</p>
+                )}
+              </div>
+            </div>
+            {!fieldErrors.guests && !isGroup && (
+              <p className="text-xs text-muted-foreground font-sans">
+                Groep van meer dan {MAX_GUESTS_PER_RESERVATION} personen? Vul het aantal in — dan
+                sturen wij uw aanvraag door en nemen wij contact met u op.
+              </p>
+            )}
+            {isGroup && (
+              <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-foreground text-xs font-sans leading-relaxed">
+                Voor groepen van meer dan {MAX_GUESTS_PER_RESERVATION} personen plannen wij de
+                reservering persoonlijk in. Vul uw gegevens en gewenste datum in en verstuur uw
+                aanvraag; wij nemen zo snel mogelijk contact met u op. Liever direct bellen? Dat kan
+                op{' '}
+                <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
+              </div>
+            )}
+
+            {/* Tijdslot — alleen voor directe reserveringen (t/m 8 personen) */}
+            {!isGroup && (
             <div>
               <Label htmlFor="time-select">Tijdslot *</Label>
               <Select
@@ -378,31 +494,10 @@ const ReservationPage = () => {
                 <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.time}</p>
               )}
             </div>
+            )}
 
-            {/* Aantal personen */}
-            <div>
-              <Label htmlFor="guests">Aantal personen *</Label>
-              <Input
-                id="guests"
-                type="number"
-                value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                min={1}
-                max={20}
-                placeholder="Aantal"
-                aria-invalid={!!fieldErrors.guests}
-              />
-              {fieldErrors.guests ? (
-                <p className="mt-1 text-xs text-destructive font-sans">{fieldErrors.guests}</p>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground font-sans">
-                  Voor meer dan {MAX_GUESTS_PER_RESERVATION} personen? Bel ons op{' '}
-                  <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
-                </p>
-              )}
-            </div>
-
-            {/* Zitplaatsvoorkeur */}
+            {/* Zitplaatsvoorkeur — niet relevant voor groepsaanvragen */}
+            {!isGroup && (
             <div>
               <Label>Zitplaatsvoorkeur</Label>
               <div className="flex gap-6 mt-2">
@@ -423,6 +518,7 @@ const ReservationPage = () => {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Opmerking */}
             <div>
@@ -444,11 +540,17 @@ const ReservationPage = () => {
               className="w-full"
               disabled={submitting}
             >
-              {submitting ? 'Reservering versturen...' : 'Reservering versturen'}
+              {submitting
+                ? 'Versturen...'
+                : isGroup
+                  ? 'Groepsaanvraag versturen'
+                  : 'Reservering versturen'}
             </Button>
 
             <p className="text-xs text-muted-foreground text-center font-sans">
-              We bevestigen uw reservering zo snel mogelijk per e-mail.
+              {isGroup
+                ? 'Wij nemen zo snel mogelijk contact met u op over uw aanvraag.'
+                : 'We bevestigen uw reservering zo snel mogelijk per e-mail.'}
             </p>
           </form>
         </div>

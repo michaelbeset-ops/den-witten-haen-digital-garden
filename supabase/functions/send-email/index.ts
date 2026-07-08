@@ -43,7 +43,7 @@ const emailWrapper = (content: string) => `<!DOCTYPE html>
                   <a href="mailto:denwittenhaen@philadelphia.nl" style="color:#5a7a5e;text-decoration:none;">denwittenhaen@philadelphia.nl</a>
                 </td>
                 <td align="right" style="font-family:Georgia,serif;font-size:12px;color:#b0a090;vertical-align:top;line-height:1.9;">
-                  Ma – Wo: 09:00 – 16:00<br>Do – Za: 10:00 – 17:00
+                  Ma – Vr: 10:00 – 16:00<br>Za: 10:00 – 17:00
                 </td>
               </tr>
             </table>
@@ -56,8 +56,40 @@ const emailWrapper = (content: string) => `<!DOCTYPE html>
 </body>
 </html>`
 
-function buildConfirmationHtml(name: string, date: string, time: string, guests: number): string {
+const RESERVATION_TYPE_LABELS: Record<string, string> = {
+  lunch: 'Lunch',
+  high_tea: 'High tea',
+}
+
+// Annuleringsvoorwaarde voor high tea (verplichte prepayment-regel)
+const HIGH_TEA_CANCELLATION_NOTICE = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf7ee;border:1px solid #e6d3b3;border-radius:10px;margin-bottom:28px;">
+      <tr>
+        <td style="padding:18px 24px;font-family:Georgia,serif;font-size:13px;color:#7a5c30;line-height:1.7;">
+          <strong style="color:#5a4420;">Annuleringsvoorwaarde high tea</strong><br>
+          Annuleren kan tot uiterlijk 48 uur van tevoren. Bij annulering binnen 48 uur
+          voor aanvang wordt de betaling alsnog in rekening gebracht.
+        </td>
+      </tr>
+    </table>`
+
+function buildConfirmationHtml(
+  name: string,
+  date: string,
+  time: string,
+  guests: number,
+  reservationType = 'lunch',
+): string {
   const formattedDate = formatDutchDate(date)
+  const typeLabel = RESERVATION_TYPE_LABELS[reservationType] ?? RESERVATION_TYPE_LABELS.lunch
+  const typeRow = `
+      <tr>
+        <td style="padding:18px 24px;border-bottom:1px solid #e8dfd0;">
+          <span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a8070;font-family:Georgia,serif;">Reservering</span><br>
+          <span style="font-size:17px;color:#2c1f0f;margin-top:4px;display:block;font-family:Georgia,serif;">${typeLabel}</span>
+        </td>
+      </tr>`
+  const cancellationNotice = reservationType === 'high_tea' ? HIGH_TEA_CANCELLATION_NOTICE : ''
   return emailWrapper(`
     <div style="text-align:center;margin-bottom:28px;">
       <div style="display:inline-block;width:56px;height:56px;background:#eef3ee;border-radius:50%;line-height:56px;font-size:26px;text-align:center;">📅</div>
@@ -69,6 +101,7 @@ function buildConfirmationHtml(name: string, date: string, time: string, guests:
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6ef;border-radius:10px;border:1px solid #e8dfd0;margin-bottom:28px;">
+      ${typeRow}
       <tr>
         <td style="padding:18px 24px;border-bottom:1px solid #e8dfd0;">
           <span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a8070;font-family:Georgia,serif;">Datum</span><br>
@@ -98,7 +131,7 @@ function buildConfirmationHtml(name: string, date: string, time: string, guests:
         </td>
       </tr>
     </table>
-
+${cancellationNotice}
     <p style="margin:0 0 48px 0;font-family:Georgia,serif;font-size:15px;color:#2c1f0f;line-height:1.9;">
       Heeft u vragen of wilt u annuleren? Neem contact met ons op via
       <a href="mailto:denwittenhaen@philadelphia.nl" style="color:#5a7a5e;text-decoration:none;">denwittenhaen@philadelphia.nl</a>
@@ -140,7 +173,7 @@ function buildCancellationHtml(name: string, date: string, time: string): string
       Wilt u een nieuwe reservering maken?
     </p>
     <div style="text-align:center;margin-bottom:40px;">
-      <a href="https://michaelbeset-ops.github.io/den-witten-haen-digital-garden/reserveren"
+      <a href="https://denwittenhaen.com/reserveren"
          style="display:inline-block;background:#5a7a5e;color:#fffdf8;font-family:Georgia,serif;font-size:14px;letter-spacing:1px;text-decoration:none;padding:14px 32px;border-radius:6px;">
         Opnieuw reserveren
       </a>
@@ -151,6 +184,51 @@ function buildCancellationHtml(name: string, date: string, time: string): string
       <a href="mailto:denwittenhaen@philadelphia.nl" style="color:#5a7a5e;text-decoration:none;">denwittenhaen@philadelphia.nl</a>.<br><br>
       Met vriendelijke groet,<br>
       <strong>Team Den Witten Haen</strong>
+    </p>
+  `)
+}
+
+function buildGroupRequestHtml(
+  name: string,
+  email: string,
+  phone: string,
+  date: string,
+  guests: number,
+  message: string | null,
+  reservationType = 'lunch',
+): string {
+  const formattedDate = date ? formatDutchDate(date) : 'Nog niet opgegeven'
+  const typeLabel = RESERVATION_TYPE_LABELS[reservationType] ?? RESERVATION_TYPE_LABELS.lunch
+  const row = (label: string, value: string) => `
+      <tr>
+        <td style="padding:16px 24px;border-bottom:1px solid #e8dfd0;">
+          <span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a8070;font-family:Georgia,serif;">${label}</span><br>
+          <span style="font-size:16px;color:#2c1f0f;margin-top:4px;display:block;font-family:Georgia,serif;">${value}</span>
+        </td>
+      </tr>`
+  return emailWrapper(`
+    <h2 style="margin:0 0 10px 0;font-family:Georgia,serif;font-size:24px;font-weight:normal;color:#2c1f0f;text-align:center;">Nieuwe groepsaanvraag</h2>
+    <p style="margin:0 0 28px 0;font-family:Georgia,serif;font-size:14px;color:#6b5c4c;text-align:center;line-height:1.8;">
+      Een gast heeft via de website een aanvraag ingediend voor een groep van meer dan 8 personen.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6ef;border-radius:10px;border:1px solid #e8dfd0;margin-bottom:28px;">
+      ${row('Naam', name)}
+      ${row('E-mail', `<a href="mailto:${email}" style="color:#5a7a5e;text-decoration:none;">${email}</a>`)}
+      ${row('Telefoon', phone || '—')}
+      ${row('Type', typeLabel)}
+      ${row('Gewenste datum', formattedDate)}
+      ${row('Aantal personen', String(guests))}
+      <tr>
+        <td style="padding:16px 24px;">
+          <span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a8070;font-family:Georgia,serif;">Opmerking</span><br>
+          <span style="font-size:15px;color:#2c1f0f;margin-top:4px;display:block;font-family:Georgia,serif;line-height:1.7;">${message ? message : '—'}</span>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 48px 0;font-family:Georgia,serif;font-size:14px;color:#8a7060;line-height:1.8;">
+      Neem contact op met de gast om de aanvraag te bevestigen. U kunt rechtstreeks antwoorden op deze e-mail.
     </p>
   `)
 }
@@ -169,18 +247,35 @@ Deno.serve(async (req: Request) => {
   }
 
   const body = await req.json()
-  const { type, name, email, date, time, guests } = body
-
-  const subject = type === 'confirmation'
-    ? 'Uw reservering bij Den Witten Haen'
-    : 'Annulering reservering Den Witten Haen'
-
-  const html = type === 'confirmation'
-    ? buildConfirmationHtml(name, date, time, guests ?? 1)
-    : buildCancellationHtml(name, date, time)
+  const { type, name, email, phone, date, time, guests, message, reservationType } = body
 
   const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'denwittenhaen@philadelphia.nl'
   const FROM_NAME = 'Den Witten Haen'
+  // Group inquiries are routed to the restaurant's own inbox.
+  const RESTAURANT_EMAIL = Deno.env.get('RESTAURANT_EMAIL') ?? 'denwittenhaen@philadelphia.nl'
+  console.log('[send-email] FROM_EMAIL secret raw value:', JSON.stringify(Deno.env.get('FROM_EMAIL')))
+  console.log('[send-email] using sender:', FROM_EMAIL)
+
+  let subject: string
+  let html: string
+  let recipient: { email: string; name: string }
+  let replyTo: { email: string; name: string } | undefined
+
+  if (type === 'group_request') {
+    subject = `Nieuwe groepsaanvraag — ${guests} personen (${name})`
+    html = buildGroupRequestHtml(name, email, phone, date, guests ?? 0, message ?? null, reservationType)
+    recipient = { email: RESTAURANT_EMAIL, name: FROM_NAME }
+    // Let staff reply straight to the guest.
+    replyTo = { email, name }
+  } else if (type === 'confirmation') {
+    subject = 'Uw reservering bij Den Witten Haen'
+    html = buildConfirmationHtml(name, date, time, guests ?? 1, reservationType)
+    recipient = { email, name }
+  } else {
+    subject = 'Annulering reservering Den Witten Haen'
+    html = buildCancellationHtml(name, date, time)
+    recipient = { email, name }
+  }
 
   const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -190,7 +285,8 @@ Deno.serve(async (req: Request) => {
     },
     body: JSON.stringify({
       sender: { name: FROM_NAME, email: FROM_EMAIL },
-      to: [{ email, name }],
+      to: [recipient],
+      ...(replyTo ? { replyTo } : {}),
       subject,
       htmlContent: html,
     }),

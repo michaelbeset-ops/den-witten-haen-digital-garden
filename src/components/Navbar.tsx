@@ -39,6 +39,29 @@ const Navbar = () => {
     }
   };
 
+  // Lock body scroll while the mobile menu is open. Plain `overflow: hidden`
+  // on <body> is unreliable on iOS Safari, so pin the body in place instead
+  // and restore the scroll position on close.
+  useEffect(() => {
+    if (!open) return;
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const prev = { position: style.position, top: style.top, left: style.left, right: style.right, width: style.width };
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.left = "0";
+    style.right = "0";
+    style.width = "100%";
+    return () => {
+      style.position = prev.position;
+      style.top = prev.top;
+      style.left = prev.left;
+      style.right = prev.right;
+      style.width = prev.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
+
   const isHome = location.pathname === "/";
   const solid = !isHome || scrolled;
 
@@ -116,17 +139,25 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-background border-b border-border px-4 pb-4">
-          {allLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => handleNavClick(link.to)}
-              className="block py-3 text-base font-sans text-muted-foreground hover:text-foreground border-b border-border last:border-0"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="md:hidden fixed inset-0 top-24 z-40 bg-background flex flex-col overflow-y-auto">
+          <nav className="flex-1 flex flex-col justify-center px-8 py-8">
+            {allLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => handleNavClick(link.to)}
+                className="py-4 font-serif text-3xl text-foreground border-b border-border last:border-0 transition-colors hover:text-primary"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="px-8 pb-10 pt-2 border-t border-border">
+            <p className="font-sans text-sm text-muted-foreground leading-relaxed">
+              Groenmarkt 19-B, 3311 BD Dordrecht<br />
+              078 611 20 50
+            </p>
+          </div>
         </div>
       )}
     </nav>
