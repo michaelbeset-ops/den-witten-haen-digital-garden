@@ -4,7 +4,7 @@ import { Landmark, TreePine, Heart, Star, ChevronRight, ArrowRight } from "lucid
 
 import heroImage from "@/assets/hero-interior.png";
 import heroImageMobile from "@/assets/hero-mobile.jpg";
-import gardenImage from "@/assets/garden-tuin.png";
+import terrasImage from "@/assets/buiten-terras.jpg";
 import teamImage from "@/assets/team.png";
 
 const specialties = [
@@ -183,12 +183,12 @@ const Index = () => {
           </div>
           <div className="rounded-lg overflow-hidden shadow-lg">
             <img
-              src={gardenImage}
-              alt="De tuin van Den Witten Haen"
+              src={terrasImage}
+              alt="Het buitenterras van Den Witten Haen"
               className="w-full h-80 object-cover"
               loading="lazy"
-              width={800}
-              height={600}
+              width={1600}
+              height={900}
             />
           </div>
         </div>
