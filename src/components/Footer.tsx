@@ -27,8 +27,8 @@ const Footer = () => (
         <p className="text-sm opacity-80">E-mail: <a href="mailto:denwittenhaen@philadelphia.nl" className="hover:opacity-100">denwittenhaen@philadelphia.nl</a></p>
         <div className="mt-3">
           <h4 className="text-sm font-semibold mb-1">Openingstijden</h4>
-          <p className="text-sm opacity-80">Ma t/m wo: 09:00 – 16:00</p>
-          <p className="text-sm opacity-80">Do t/m za: 10:00 – 17:00</p>
+          <p className="text-sm opacity-80">Ma t/m vr: 10:00 – 16:00</p>
+          <p className="text-sm opacity-80">Za: 10:00 – 17:00</p>
           <p className="text-sm opacity-80">Zo: gesloten</p>
         </div>
       </div>

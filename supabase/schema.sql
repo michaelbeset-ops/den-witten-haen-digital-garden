@@ -13,7 +13,8 @@ create table if not exists reservations (
   guests integer not null,
   message text,
   status text default 'aangevraagd',
-  seating_preference text
+  seating_preference text,
+  reservation_type text not null default 'lunch'
 );
 
 -- Row Level Security
@@ -83,7 +84,8 @@ create or replace function public.create_reservation(
   p_time    text,
   p_guests  integer,
   p_message text    default null,
-  p_seating text    default null
+  p_seating text    default null,
+  p_type    text    default 'lunch'
 )
 returns uuid
 language plpgsql
@@ -131,12 +133,12 @@ begin
     raise exception 'Dit tijdslot heeft niet genoeg ruimte' using errcode = 'P0001';
   end if;
 
-  insert into reservations (name, email, phone, date, time, guests, message, status, seating_preference)
-  values (p_name, p_email, p_phone, p_date, p_time, p_guests, p_message, 'aangevraagd', p_seating)
+  insert into reservations (name, email, phone, date, time, guests, message, status, seating_preference, reservation_type)
+  values (p_name, p_email, p_phone, p_date, p_time, p_guests, p_message, 'aangevraagd', p_seating, coalesce(p_type, 'lunch'))
   returning id into new_id;
 
   return new_id;
 end;
 $$;
 
-grant execute on function public.create_reservation(text, text, text, date, text, integer, text, text) to anon;
+grant execute on function public.create_reservation(text, text, text, date, text, integer, text, text, text) to anon;

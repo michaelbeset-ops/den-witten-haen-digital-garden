@@ -26,8 +26,24 @@ export async function sendConfirmationEmail(r: {
   date: string
   time: string
   guests: number
+  reservationType?: 'lunch' | 'high_tea'
 }): Promise<void> {
   await callSendEmail({ type: 'confirmation', ...r })
+}
+
+// Group inquiry (> 8 guests): emailed to the restaurant only, no automatic
+// confirmation to the customer. The customer's e-mail is included so staff
+// can reply directly.
+export async function sendGroupRequestEmail(r: {
+  name: string
+  email: string
+  phone: string
+  date: string
+  guests: number
+  message?: string
+  reservationType?: 'lunch' | 'high_tea'
+}): Promise<void> {
+  await callSendEmail({ type: 'group_request', ...r })
 }
 
 export async function sendCancellationEmail(r: {

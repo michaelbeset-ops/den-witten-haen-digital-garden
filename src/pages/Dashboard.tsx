@@ -443,12 +443,17 @@ const Dashboard = () => {
                         <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{r.phone}</td>
                         <td className="px-4 py-3 text-sm font-sans text-foreground text-center">{r.guests}</td>
                         <td className="px-4 py-3 text-sm font-sans text-muted-foreground max-w-[200px]">
+                          {r.reservation_type === 'high_tea' && (
+                            <span className="inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mr-1 mb-0.5 bg-rose-100 text-rose-800">
+                              High tea
+                            </span>
+                          )}
                           {r.seating_preference && (
                             <span className={`inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mr-1 mb-0.5 ${r.seating_preference === 'buiten' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}`}>
                               {r.seating_preference.charAt(0).toUpperCase() + r.seating_preference.slice(1)}
                             </span>
                           )}
-                          <span className="truncate block">{r.message || (r.seating_preference ? '' : '—')}</span>
+                          <span className="truncate block">{r.message || (r.seating_preference || r.reservation_type === 'high_tea' ? '' : '—')}</span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3">
@@ -493,6 +498,11 @@ const Dashboard = () => {
                     <div className="space-y-1 text-sm font-sans mb-3">
                       <p><a href={`mailto:${r.email}`} className="text-primary hover:underline break-all">{r.email}</a></p>
                       <p className="text-muted-foreground">{r.phone}</p>
+                      {r.reservation_type === 'high_tea' && (
+                        <span className="inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mt-1 mr-1 bg-rose-100 text-rose-800">
+                          High tea
+                        </span>
+                      )}
                       {r.seating_preference && (
                         <span className={`inline-block text-xs font-sans font-medium px-2 py-0.5 rounded-full mt-1 ${r.seating_preference === 'buiten' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}`}>
                           {r.seating_preference.charAt(0).toUpperCase() + r.seating_preference.slice(1)}
