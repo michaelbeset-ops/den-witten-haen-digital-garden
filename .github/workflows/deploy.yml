@@ -33,6 +33,9 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Tijdelijk: toont een "Binnenkort online"-pagina op denwittenhaen.com.
+          # Verwijder deze regel (of zet op "false") om de volledige site live te zetten.
+          VITE_COMING_SOON: "true"
 
       - uses: actions/upload-pages-artifact@v3
         with:

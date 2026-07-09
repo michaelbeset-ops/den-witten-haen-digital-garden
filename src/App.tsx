@@ -17,6 +17,7 @@ import CookiePage from "./pages/Cookies";
 import GroupsPage from "./pages/Groepen";
 import LocationsPage from "./pages/Locaties";
 import TeamPage from "./pages/Team";
+import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -28,6 +29,12 @@ import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 
 const queryClient = new QueryClient();
+
+// Zet VITE_COMING_SOON="true" (in de deploy-workflow) om de publieke site tijdelijk
+// te vervangen door een "Binnenkort online"-pagina. De admin-routes (/login,
+// /dashboard, /reset-wachtwoord) blijven altijd bereikbaar. Verwijder de flag om
+// de volledige site live te zetten.
+const COMING_SOON = import.meta.env.VITE_COMING_SOON === "true";
 
 const PublicLayout = () => (
   <>
@@ -47,18 +54,23 @@ const App = () => (
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ScrollToTop />
         <Routes>
-          {/* Public routes with Navbar / Footer */}
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/menu" element={<MenuPage />} />
-            <Route path="/reserveren" element={<ReservationPage />} />
-            <Route path="/groepen" element={<GroupsPage />} />
-            <Route path="/locaties" element={<LocationsPage />} />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/cookies" element={<CookiePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
+          {COMING_SOON ? (
+            /* Tijdelijke "Binnenkort online"-pagina voor alle publieke routes */
+            <Route path="*" element={<ComingSoon />} />
+          ) : (
+            /* Public routes with Navbar / Footer */
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/menu" element={<MenuPage />} />
+              <Route path="/reserveren" element={<ReservationPage />} />
+              <Route path="/groepen" element={<GroupsPage />} />
+              <Route path="/locaties" element={<LocationsPage />} />
+              <Route path="/team" element={<TeamPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/cookies" element={<CookiePage />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          )}
 
           {/* Auth / admin routes — no global Navbar/Footer */}
           <Route path="/login" element={<LoginPage />} />
