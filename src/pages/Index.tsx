@@ -165,19 +165,29 @@ const Index = () => {
             <h2 className="font-serif text-3xl md:text-4xl mb-6">Over Den Witten Haen</h2>
             <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
               <p>
-                In het historische centrum van Dordrecht ligt Den Witten Haen — een lunchroom
-                in een monumentaal pand met een verborgen stadstuin en de oudste beuk van Dordrecht.
+                Midden in het historische centrum van Dordrecht vind je Den Witten Haen. Een
+                bijzondere lunchroom in een monumentaal pand, waar geschiedenis, gastvrijheid
+                en ontmoeting samenkomen.
+              </p>
+              <p>
+                Achter de deuren ligt een plek die je misschien niet direct verwacht: een
+                verborgen stadstuin, omringd door groen en rust, met als bijzonder middelpunt de
+                oudste beuk van Dordrecht. Een plek waar je kunt genieten en je welkom bent.
               </p>
               <p className="hidden md:block">
-                Bij ons werken mensen met een beperking met hart en ziel aan uw ervaring.
-                Dat maakt Den Witten Haen niet alleen een plek om te eten, maar een plek om u
-                thuis te voelen. Wij geloven dat gastvrijheid het mooiste is wanneer het van
-                binnenuit komt.
+                Wij geloven dat gastvrijheid meer is dan een goede kop koffie of een lekkere
+                lunch. Het zit in de kleine dingen.
               </p>
               <p className="hidden md:block">
-                Den Witten Haen is onderdeel van Philadelphia, een organisatie die mensen met een
-                beperking ondersteunt om het beste uit zichzelf te halen. Samen creëren wij een
-                plek waar iedereen welkom is.
+                Den Witten Haen is onderdeel van Philadelphia. Vanuit die gedachte bouwen we
+                samen aan een plek waar iedereen kan meedoen, zich kan ontwikkelen en van
+                betekenis is.
+              </p>
+              <p className="text-foreground font-medium">
+                Een plek met historie.<br />
+                Een plek met hart.<br />
+                Een plek waar iedereen welkom is.<br />
+                Welkom bij Den Witten Haen.
               </p>
             </div>
           </div>

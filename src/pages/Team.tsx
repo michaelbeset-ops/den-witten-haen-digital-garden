@@ -18,19 +18,23 @@ const TeamPage = () => (
           <h1 className="font-serif text-4xl md:text-5xl mb-6 leading-tight">Ons Team</h1>
           <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
             <p>
-              Achter elke kop koffie en elk bord bij Den Witten Haen staat een team dat er met
-              hart en ziel voor gaat. Mensen met een beperking werken hier zij aan zij met hun
-              begeleiders — en dat proeft u. Niet alleen in het eten, maar vooral in de warme,
-              ongedwongen sfeer die u meteen voelt als u binnenstapt.
+              Een plek met karakter wordt gemaakt door de mensen die er werken. Bij Den Witten
+              Haen begint dat bij ons team.
             </p>
             <p>
-              Bij ons mag iedereen groeien op zijn eigen tempo en op zijn eigen manier. De één
-              schittert in de keuken, de ander in het contact met de gasten. Samen maken zij van
-              elk bezoek net dat beetje extra.
+              Iedereen brengt zijn eigen talent, persoonlijkheid en verhaal mee. De één voelt
+              zich thuis in de keuken, de ander geniet van het contact met onze gasten. Samen
+              zorgen we voor iets bijzonders: niet alleen een lekkere lunch of goede koffie,
+              maar vooral een warm welkom.
+            </p>
+            <p>
+              We geven elkaar de ruimte om te ontdekken, te leren en te groeien. Door samen te
+              werken en elkaar te versterken, ontstaat de bijzondere sfeer die u bij Den Witten
+              Haen voelt.
             </p>
             <p className="text-foreground font-medium">
-              Kom gerust langs, maak kennis met het team en ervaar zelf waarom Den Witten Haen
-              zo bijzonder is.
+              Want de sfeer van Den Witten Haen zit niet alleen in de plek. Die zit vooral in de
+              mensen.
             </p>
           </div>
         </div>
