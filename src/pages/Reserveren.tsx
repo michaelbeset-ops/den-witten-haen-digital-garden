@@ -12,68 +12,21 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 import { sendConfirmationEmail, sendGroupRequestEmail } from '@/lib/email'
-
-type ReservationType = 'lunch' | 'high_tea'
-const RESERVATION_TYPES: { value: ReservationType; label: string }[] = [
-  { value: 'lunch', label: 'Lunch' },
-  { value: 'high_tea', label: 'High tea' },
-]
-
-// Ma t/m vr: geopend 10:00 – 16:00 (laatste tijdslot 15:00)
-const SLOTS_WEEKDAY = [
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
-]
-// Za: geopend 10:00 – 17:00 (laatste tijdslot 16:00)
-const SLOTS_SATURDAY = [
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
-]
-
-function getSlotsForDate(dateStr: string): string[] {
-  if (!dateStr) return SLOTS_WEEKDAY
-  const day = new Date(dateStr + 'T12:00:00').getDay() // 0=zo, 1=ma … 6=za
-  if (day === 0) return [] // zondag gesloten
-  if (day === 6) return SLOTS_SATURDAY // zaterdag tot 17:00
-  return SLOTS_WEEKDAY // ma t/m vr tot 16:00
-}
-
-const MAX_GUESTS_PER_WINDOW = 48
-const MAX_GUESTS_PER_RESERVATION = 8
-const PHONE_NUMBER = '078 611 20 50'
-
-// Rolling 2-hour window helpers
-const toMin = (t: string): number => {
-  const [h, m] = t.split(':').map(Number)
-  return h * 60 + m
-}
-const toTime = (min: number): string => {
-  if (min < 0 || min >= 1440) return ''
-  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
-}
-// Returns max concurrent guests in any 30-min sub-window during [slotTime, slotTime+2h)
-// counting existing slotCounts + newGuests additional people booking at slotTime
-const windowLoad = (counts: SlotCounts, slotTime: string, newGuests = 0): number => {
-  const base = toMin(slotTime)
-  let maxLoad = 0
-  for (let k = 0; k < 4; k++) {
-    // At sub-time base+k*30, the occupied slots are base+(k-3)*30 … base+k*30
-    let load = newGuests // new guests at slotTime appear in every sub-window
-    for (let j = k - 3; j <= k; j++) {
-      load += counts[toTime(base + j * 30)] ?? 0
-    }
-    maxLoad = Math.max(maxLoad, load)
-  }
-  return maxLoad
-}
-
-const tomorrowStr = (): string => {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
-}
-
-type SlotCounts = Record<string, number>
+import {
+  type ReservationType,
+  type SlotCounts,
+  RESERVATION_TYPES,
+  MAX_GUESTS_PER_WINDOW,
+  MAX_GUESTS_PER_RESERVATION,
+  PHONE_NUMBER,
+  PHONE_HREF,
+  EMAIL_RE,
+  getSlotsForDate,
+  windowLoad,
+  fetchAvailability,
+  tomorrowStr,
+  reservationErrorMessage,
+} from '@/lib/reservations'
 
 type FieldErrors = {
   name?: string
@@ -119,44 +72,26 @@ const ReservationPage = () => {
       setDayBlocked(false)
       return
     }
+    let cancelled = false
     setLoadingSlots(true)
-    Promise.all([
-      supabase.rpc('get_slot_counts', { check_date: date }),
-      supabase.from('blocked_slots').select('time_from, time_to').eq('date', date),
-    ]).then(([slotRes, blockedRes]) => {
+    fetchAvailability(date).then((a) => {
+      if (cancelled) return
       setLoadingSlots(false)
-
-      if (!slotRes.error) {
-        const counts: SlotCounts = {}
-        for (const row of (slotRes.data ?? []) as { slot_time: string; slot_count: number }[]) {
-          counts[row.slot_time] = row.slot_count
-        }
-        setSlotCounts(counts)
-        if (time && windowLoad(counts, time) >= MAX_GUESTS_PER_WINDOW) setTime('')
-      }
-
-      if (!blockedRes.error) {
-        const rows = (blockedRes.data ?? []) as { time_from: string | null; time_to: string | null }[]
-        const fullDay = rows.some(r => r.time_from === null)
-        setDayBlocked(fullDay)
-        // Expand each range to the concrete slots it covers
-        const ranges = rows.filter(r => r.time_from !== null)
-        const blocked = new Set<string>(
-          SLOTS_SATURDAY.filter(s =>
-            ranges.some(r => s >= r.time_from! && (r.time_to === null || s <= r.time_to))
-          )
-        )
-        setBlockedTimes(blocked)
-        if (fullDay || (time && blocked.has(time))) setTime('')
+      setSlotCounts(a.counts)
+      setBlockedTimes(a.blockedTimes)
+      setDayBlocked(a.dayBlocked)
+      if (time && (a.dayBlocked || a.blockedTimes.has(time) || windowLoad(a.counts, time) >= MAX_GUESTS_PER_WINDOW)) {
+        setTime('')
       }
     })
+    return () => { cancelled = true }
   }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const validate = (): boolean => {
     const errors: FieldErrors = {}
     if (!name.trim()) errors.name = 'Naam is verplicht.'
     if (!email.trim()) errors.email = 'E-mailadres is verplicht.'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Voer een geldig e-mailadres in.'
+    else if (!EMAIL_RE.test(email.trim())) errors.email = 'Voer een geldig e-mailadres in.'
     if (!phone.trim()) errors.phone = 'Telefoonnummer is verplicht.'
     if (!date) errors.date = 'Datum is verplicht.'
     if (date && dayBlocked) errors.date = 'Op deze dag zijn wij gesloten.'
@@ -169,6 +104,12 @@ const ReservationPage = () => {
       else if (blockedTimes.has(time)) errors.time = 'Dit tijdslot is gesloten.'
     }
     setFieldErrors(errors)
+    const firstError = (['name', 'email', 'phone', 'date', 'guests', 'time'] as const).find(k => errors[k])
+    if (firstError) {
+      const el = document.getElementById(firstError === 'time' ? 'time-select' : firstError)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el?.focus({ preventScroll: true })
+    }
     return Object.keys(errors).length === 0
   }
 
@@ -236,10 +177,10 @@ const ReservationPage = () => {
 
     if (insertError || !newId) {
       setSubmitting(false)
-      if (insertError?.code === 'P0001') {
-        setFieldErrors((prev) => ({ ...prev, time: 'Dit tijdslot heeft niet genoeg ruimte meer voor uw gezelschap. Kies een ander tijdslot.' }))
+      if (insertError?.code === 'P0001' || insertError?.code === 'P0002') {
+        setFieldErrors((prev) => ({ ...prev, time: reservationErrorMessage(insertError) }))
       } else {
-        setGeneralError(`Uw reservering kon niet worden opgeslagen. (${insertError?.code}: ${insertError?.message})`)
+        setGeneralError(reservationErrorMessage(insertError))
       }
       console.error('Insert fout:', insertError)
       return
@@ -449,7 +390,7 @@ const ReservationPage = () => {
                 reservering persoonlijk in. Vul uw gegevens en gewenste datum in en verstuur uw
                 aanvraag; wij nemen zo snel mogelijk contact met u op. Liever direct bellen? Dat kan
                 op{' '}
-                <a href={`tel:${PHONE_NUMBER.replace(/\s|–/g, '')}`} className="underline">{PHONE_NUMBER}</a>.
+                <a href={PHONE_HREF} className="underline">{PHONE_NUMBER}</a>.
               </div>
             )}
 

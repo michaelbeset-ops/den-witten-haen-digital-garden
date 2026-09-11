@@ -14,39 +14,22 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 import { sendConfirmationEmail, sendGroupRequestEmail } from '@/lib/email'
+import {
+  type ReservationType,
+  type Availability,
+  RESERVATION_TYPES,
+  MAX_GUESTS_PER_RESERVATION,
+  PHONE_NUMBER,
+  PHONE_HREF,
+  EMAIL_RE,
+  getSlotsForDate,
+  fetchAvailability,
+  isSlotUnavailable,
+  tomorrowStr,
+  reservationErrorMessage,
+} from '@/lib/reservations'
 
-type ReservationType = 'lunch' | 'high_tea'
-const RESERVATION_TYPES: { value: ReservationType; label: string }[] = [
-  { value: 'lunch', label: 'Lunch' },
-  { value: 'high_tea', label: 'High tea' },
-]
-
-// Ma t/m vr: geopend 10:00 – 16:00 (laatste tijdslot 15:00)
-const SLOTS_WEEKDAY = [
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
-]
-// Za: geopend 10:00 – 17:00 (laatste tijdslot 16:00)
-const SLOTS_SATURDAY = [
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
-]
-function getSlotsForDate(dateStr: string): string[] {
-  if (!dateStr) return SLOTS_WEEKDAY
-  const day = new Date(dateStr + 'T12:00:00').getDay()
-  if (day === 0) return []
-  if (day === 6) return SLOTS_SATURDAY
-  return SLOTS_WEEKDAY
-}
-const MAX_GUESTS_PER_SLOT = 48
-const MAX_GUESTS_PER_RESERVATION = 8
-const PHONE_NUMBER = '078 611 20 50'
-const tomorrowStr = () => {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
-}
-type SlotCounts = Record<string, number>
+const EMPTY_AVAILABILITY: Availability = { counts: {}, blockedTimes: new Set(), dayBlocked: false }
 
 const ReservationPopup = () => {
   const location = useLocation()
@@ -59,7 +42,7 @@ const ReservationPopup = () => {
   const [guests, setGuests] = useState('')
   const [message, setMessage] = useState('')
   const [reservationType, setReservationType] = useState<ReservationType>('lunch')
-  const [slotCounts, setSlotCounts] = useState<SlotCounts>({})
+  const [availability, setAvailability] = useState<Availability>(EMPTY_AVAILABILITY)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -100,25 +83,24 @@ const ReservationPopup = () => {
     }
   }, [open])
 
-  // Slot availability
+  // Slot availability + sluitingen (zelfde regels als de reserveringspagina)
   useEffect(() => {
-    if (!date) { setSlotCounts({}); return }
+    if (!date) { setAvailability(EMPTY_AVAILABILITY); return }
+    let cancelled = false
     setLoadingSlots(true)
-    supabase.rpc('get_slot_counts', { check_date: date }).then(({ data }) => {
+    fetchAvailability(date).then((a) => {
+      if (cancelled) return
       setLoadingSlots(false)
-      const counts: SlotCounts = {}
-      for (const row of (data ?? []) as { slot_time: string; slot_count: number }[]) {
-        counts[row.slot_time] = row.slot_count
-      }
-      setSlotCounts(counts)
-      if (time && (counts[time] ?? 0) >= MAX_GUESTS_PER_SLOT) setTime('')
+      setAvailability(a)
+      if (time && isSlotUnavailable(a, time)) setTime('')
     })
+    return () => { cancelled = true }
   }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => {
     setName(''); setEmail(''); setPhone(''); setDate('')
     setTime(''); setGuests(''); setMessage(''); setReservationType('lunch')
-    setSlotCounts({}); setError(''); setSuccess(false)
+    setAvailability(EMPTY_AVAILABILITY); setError(''); setSuccess(false)
   }
 
   const handleClose = () => { setOpen(false); reset() }
@@ -127,12 +109,25 @@ const ReservationPopup = () => {
     e.preventDefault()
     setError('')
 
+    if (!name.trim() || !email.trim() || !phone.trim() || !date || !guests) {
+      setError('Vul alle verplichte velden in.')
+      return
+    }
+    if (!EMAIL_RE.test(email.trim())) {
+      setError('Voer een geldig e-mailadres in.')
+      return
+    }
+    if (isNaN(guestsNum) || guestsNum < 1) {
+      setError('Voer een geldig aantal personen in.')
+      return
+    }
+    if (availability.dayBlocked) {
+      setError('Op deze dag zijn wij gesloten. Kies een andere datum.')
+      return
+    }
+
     // Groepen > 8 personen: aanvraag naar het restaurant mailen i.p.v. direct boeken.
     if (isGroup) {
-      if (!name || !email || !phone || !date || !guests) {
-        setError('Vul alle verplichte velden in.')
-        return
-      }
       setSubmitting(true)
       await sendGroupRequestEmail({
         name: name.trim(),
@@ -149,8 +144,13 @@ const ReservationPopup = () => {
       return
     }
 
-    if (!name || !email || !phone || !date || !time || !guests) {
-      setError('Vul alle verplichte velden in.')
+    if (!time) {
+      setError('Kies een tijdslot.')
+      return
+    }
+    if (isSlotUnavailable(availability, time)) {
+      setError('Dit tijdslot is niet meer beschikbaar. Kies een ander tijdslot.')
+      setTime('')
       return
     }
     setSubmitting(true)
@@ -160,20 +160,18 @@ const ReservationPopup = () => {
       p_phone: phone.trim(),
       p_date: date,
       p_time: time,
-      p_guests: parseInt(guests, 10),
+      p_guests: guestsNum,
       p_message: message.trim() || null,
+      p_seating: null,
       p_type: reservationType,
     })
     setSubmitting(false)
     if (rpcError || !newId) {
-      if (rpcError?.code === 'P0001') {
-        setError('Dit tijdslot heeft niet genoeg ruimte meer voor uw gezelschap. Kies een ander tijdslot.')
-      } else {
-        setError(`Kon niet opslaan. (${rpcError?.code}: ${rpcError?.message})`)
-      }
+      setError(reservationErrorMessage(rpcError))
+      if (rpcError?.code === 'P0001' || rpcError?.code === 'P0002') setTime('')
       return
     }
-    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: parseInt(guests, 10), reservationType })
+    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: guestsNum, reservationType })
     setSuccessType('reservation')
     setSuccess(true)
   }
@@ -188,7 +186,7 @@ const ReservationPopup = () => {
       <button
         onClick={() => setOpen(true)}
         aria-label="Reservering maken"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 font-sans font-medium text-sm"
+        className="fixed bottom-6 right-6 z-40 hidden md:flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 font-sans font-medium text-sm"
       >
         <CalendarDays size={18} />
         Reserveren
@@ -322,7 +320,7 @@ const ReservationPopup = () => {
                     <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-foreground text-xs font-sans leading-relaxed">
                       Voor groepen van meer dan {MAX_GUESTS_PER_RESERVATION} personen plannen wij de
                       reservering persoonlijk in. Verstuur uw aanvraag, dan nemen wij contact met u op.
-                      Liever bellen? {PHONE_NUMBER}.
+                      Liever bellen? <a href={PHONE_HREF} className="underline">{PHONE_NUMBER}</a>.
                     </div>
                   )}
                   {!isGroup && (
@@ -333,19 +331,27 @@ const ReservationPopup = () => {
                         <SelectValue placeholder={loadingSlots ? 'Laden...' : !date ? 'Kies eerst een datum' : 'Kies een tijdslot'} />
                       </SelectTrigger>
                       <SelectContent>
-                        {getSlotsForDate(date).length === 0
-                          ? <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
-                          : getSlotsForDate(date).map(slot => {
-                              const full = (slotCounts[slot] ?? 0) >= MAX_GUESTS_PER_SLOT
-                              return (
-                                <SelectItem key={slot} value={slot} disabled={full}>
-                                  {slot}{full ? ' (Volgeboekt)' : ''}
-                                </SelectItem>
-                              )
-                            })
-                        }
+                        {availability.dayBlocked ? (
+                          <SelectItem value="__dayblocked__" disabled>Op deze dag zijn wij gesloten</SelectItem>
+                        ) : getSlotsForDate(date).length === 0 ? (
+                          <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
+                        ) : getSlotsForDate(date).map(slot => {
+                          const blocked = availability.blockedTimes.has(slot)
+                          const full = !blocked && isSlotUnavailable(availability, slot)
+                          return (
+                            <SelectItem key={slot} value={slot} disabled={blocked || full}>
+                              {slot}{blocked ? ' (Gesloten)' : full ? ' (Volgeboekt)' : ''}
+                            </SelectItem>
+                          )
+                        })}
                       </SelectContent>
                     </Select>
+                    {date && availability.dayBlocked && (
+                      <p className="mt-1 text-xs text-destructive font-sans">Op deze dag zijn wij gesloten.</p>
+                    )}
+                    {date && !availability.dayBlocked && getSlotsForDate(date).length === 0 && (
+                      <p className="mt-1 text-xs text-destructive font-sans">Op zondag zijn wij gesloten.</p>
+                    )}
                   </div>
                   )}
                   <div>

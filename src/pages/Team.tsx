@@ -1,5 +1,5 @@
 import { Heart } from "lucide-react";
-import teamImage from "@/assets/team.png";
+import teamImage from "@/assets/team.jpg";
 
 const teamMembers = [
   { name: "Het Keukenteam", role: "Onze koks", desc: "Met verse ingrediënten en veel liefde bereiden zij dagelijks de lekkerste gerechten." },

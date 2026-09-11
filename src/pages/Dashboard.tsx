@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { supabase, type Reservation } from '@/lib/supabase'
 import { sendCancellationEmail } from '@/lib/email'
+import { todayStr } from '@/lib/reservations'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ActionLoading = Record<string, 'annuleren' | null>
+type ActionLoading = Record<string, 'annuleren' | 'bevestigen' | null>
 type View = 'reserveringen' | 'sluitingen'
 
 interface BlockedSlot {
@@ -19,14 +20,13 @@ interface BlockedSlot {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const todayStr = () => new Date().toISOString().split('T')[0]
-
 const fmtDate = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
 
 const fmtTimeRange = (c: BlockedSlot): React.ReactNode => {
   if (!c.time_from) return <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>
-  if (!c.time_to || c.time_to === c.time_from) return c.time_from
+  if (!c.time_to) return `Vanaf ${c.time_from}`
+  if (c.time_to === c.time_from) return c.time_from
   return `${c.time_from} – ${c.time_to}`
 }
 
@@ -292,6 +292,15 @@ const Dashboard = () => {
     setActionLoading(prev => ({ ...prev, [r.id]: null }))
   }
 
+  const handleBevestigen = async (r: Reservation) => {
+    setActionLoading(prev => ({ ...prev, [r.id]: 'bevestigen' }))
+    const { error } = await supabase.from('reservations').update({ status: 'bevestigd' }).eq('id', r.id)
+    if (!error) {
+      setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'bevestigd' } : item))
+    }
+    setActionLoading(prev => ({ ...prev, [r.id]: null }))
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate('/login')
@@ -457,15 +466,26 @@ const Dashboard = () => {
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3">
-                          {r.status !== 'geannuleerd' && (
-                            <button
-                              onClick={() => handleAnnuleren(r)}
-                              disabled={!!busy}
-                              className="text-xs font-sans font-medium px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                            >
-                              {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
-                            </button>
-                          )}
+                          <div className="flex gap-2">
+                            {r.status === 'aangevraagd' && (
+                              <button
+                                onClick={() => handleBevestigen(r)}
+                                disabled={!!busy}
+                                className="text-xs font-sans font-medium px-3 py-1 rounded bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                              >
+                                {busy === 'bevestigen' ? 'Bezig…' : 'Bevestigen'}
+                              </button>
+                            )}
+                            {r.status !== 'geannuleerd' && (
+                              <button
+                                onClick={() => handleAnnuleren(r)}
+                                disabled={!!busy}
+                                className="text-xs font-sans font-medium px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                              >
+                                {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -510,15 +530,26 @@ const Dashboard = () => {
                       )}
                       {r.message && <p className="text-muted-foreground">{r.message}</p>}
                     </div>
-                    {r.status !== 'geannuleerd' && (
-                      <button
-                        onClick={() => handleAnnuleren(r)}
-                        disabled={!!busy}
-                        className="text-xs font-sans font-medium px-3 py-1.5 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
-                      </button>
-                    )}
+                    <div className="flex gap-2">
+                      {r.status === 'aangevraagd' && (
+                        <button
+                          onClick={() => handleBevestigen(r)}
+                          disabled={!!busy}
+                          className="text-xs font-sans font-medium px-3 py-1.5 rounded bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {busy === 'bevestigen' ? 'Bezig…' : 'Bevestigen'}
+                        </button>
+                      )}
+                      {r.status !== 'geannuleerd' && (
+                        <button
+                          onClick={() => handleAnnuleren(r)}
+                          disabled={!!busy}
+                          className="text-xs font-sans font-medium px-3 py-1.5 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {busy === 'annuleren' ? 'Bezig…' : 'Annuleren'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
