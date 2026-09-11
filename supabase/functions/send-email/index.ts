@@ -253,8 +253,6 @@ Deno.serve(async (req: Request) => {
   const FROM_NAME = 'Den Witten Haen'
   // Group inquiries are routed to the restaurant's own inbox.
   const RESTAURANT_EMAIL = Deno.env.get('RESTAURANT_EMAIL') ?? 'denwittenhaen@philadelphia.nl'
-  console.log('[send-email] FROM_EMAIL secret raw value:', JSON.stringify(Deno.env.get('FROM_EMAIL')))
-  console.log('[send-email] using sender:', FROM_EMAIL)
 
   let subject: string
   let html: string

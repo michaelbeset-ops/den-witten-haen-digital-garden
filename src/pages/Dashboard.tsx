@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { supabase, type Reservation } from '@/lib/supabase'
 import { sendCancellationEmail } from '@/lib/email'
+import { todayStr } from '@/lib/reservations'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,8 +19,6 @@ interface BlockedSlot {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const todayStr = () => new Date().toISOString().split('T')[0]
 
 const fmtDate = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })

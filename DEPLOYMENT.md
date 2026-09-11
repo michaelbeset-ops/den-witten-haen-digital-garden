@@ -1,3 +1,13 @@
+> **Let op (status september 2026):** op dit moment wordt de site live gezet via
+> **GitHub Pages** (`.github/workflows/deploy.yml`, domein `denwittenhaen.com` via
+> `public/CNAME`). De Vimexx-FTP-workflow hieronder is beschreven, maar het bestand
+> `deploy-vimexx.yml` bestaat (nog) niet in deze repo.
+>
+> **Database:** voer na het uitrollen eenmalig
+> `supabase/migrations/004_fix_create_reservation_blocked_ranges.sql` uit in de
+> Supabase SQL Editor. Zonder deze migratie faalt elke online reservering
+> (migratie 003 gebruikte een kolom die in migratie 002 is verwijderd).
+
 # Live zetten via Vimexx
 
 De site bouwt naar statische bestanden (`npm run build` → map `dist/`) en wordt via

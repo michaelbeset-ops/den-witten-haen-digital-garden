@@ -1,9 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+
+if (!isSupabaseConfigured) {
+  // Zonder configuratie zou createClient() een exception gooien en de hele
+  // site een witte pagina tonen. Val terug op een placeholder zodat de site
+  // blijft werken; alleen reserveren/dashboard werken dan niet.
+  console.error(
+    'VITE_SUPABASE_URL en/of VITE_SUPABASE_ANON_KEY ontbreken. ' +
+    'Reserveringen en het dashboard werken niet totdat deze zijn ingesteld.',
+  )
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-anon-key',
+)
 
 export type Reservation = {
   id: string

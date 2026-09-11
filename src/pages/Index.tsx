@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Landmark, TreePine, Heart, Star, ChevronRight, ArrowRight } from "lucide-react";
 
-import heroImage from "@/assets/hero-interior.png";
+import heroImage from "@/assets/hero-interior.jpg";
 import heroImageMobile from "@/assets/hero-mobile.jpg";
 import terrasImage from "@/assets/buiten-terras.jpg";
-import teamImage from "@/assets/team.png";
+import teamImage from "@/assets/team.jpg";
 
 const specialties = [
   { name: "Flammkuchen", desc: "Spek · roomkaas · mozzarella · rode ui", tag: "Populair" },
