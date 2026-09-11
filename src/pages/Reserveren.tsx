@@ -104,6 +104,12 @@ const ReservationPage = () => {
       else if (blockedTimes.has(time)) errors.time = 'Dit tijdslot is gesloten.'
     }
     setFieldErrors(errors)
+    const firstError = (['name', 'email', 'phone', 'date', 'guests', 'time'] as const).find(k => errors[k])
+    if (firstError) {
+      const el = document.getElementById(firstError === 'time' ? 'time-select' : firstError)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el?.focus({ preventScroll: true })
+    }
     return Object.keys(errors).length === 0
   }
 

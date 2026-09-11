@@ -186,7 +186,7 @@ const ReservationPopup = () => {
       <button
         onClick={() => setOpen(true)}
         aria-label="Reservering maken"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 font-sans font-medium text-sm"
+        className="fixed bottom-6 right-6 z-40 hidden md:flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 font-sans font-medium text-sm"
       >
         <CalendarDays size={18} />
         Reserveren
