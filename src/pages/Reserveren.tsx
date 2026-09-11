@@ -194,6 +194,8 @@ const ReservationPage = () => {
       time,
       guests: parseInt(guests, 10),
       reservationType,
+      seating: seating === 'geen' ? null : seating,
+      message: message.trim() || null,
     })
 
     setSubmitting(false)

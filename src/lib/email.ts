@@ -27,6 +27,8 @@ export async function sendConfirmationEmail(r: {
   time: string
   guests: number
   reservationType?: 'lunch' | 'high_tea'
+  seating?: 'binnen' | 'buiten' | null
+  message?: string | null
 }): Promise<void> {
   await callSendEmail({ type: 'confirmation', ...r })
 }

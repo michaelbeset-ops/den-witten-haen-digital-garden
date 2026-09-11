@@ -171,7 +171,7 @@ const ReservationPopup = () => {
       if (rpcError?.code === 'P0001' || rpcError?.code === 'P0002') setTime('')
       return
     }
-    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: guestsNum, reservationType })
+    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: guestsNum, reservationType, message: message.trim() || null })
     setSuccessType('reservation')
     setSuccess(true)
   }
