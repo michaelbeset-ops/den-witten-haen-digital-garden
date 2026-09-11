@@ -74,32 +74,30 @@ Upload daarna de volledige inhoud van `dist/` (inclusief het verborgen bestand
 `.htaccess`) via FTP of het Vimexx-bestandsbeheer naar `public_html/`.
 
 
-## E-mail instellen (Brevo, afzender noreply@denwittenhaen.nl)
+## E-mail instellen (Brevo, afzender noreply@denwittenhaen.com)
 
 De bevestigings-, annulerings- en groepsaanvraagmails worden verstuurd door de
 Supabase Edge Function `send-email` via Brevo. Afzender is
-`noreply@denwittenhaen.nl`; antwoorden van gasten gaan automatisch naar
+`noreply@denwittenhaen.com`; antwoorden van gasten gaan automatisch naar
 `denwittenhaen@philadelphia.nl` (reply-to).
 
 1. **Brevo-account**: maak een gratis account op https://www.brevo.com (300 mails/dag).
 2. **Domein verifiëren** (anders belanden mails in spam of worden ze geweigerd):
    Brevo → *Senders, Domains & Dedicated IPs* → *Domains* → *Add a domain* →
-   `denwittenhaen.nl`. Brevo toont dan 3 DNS-records (DKIM, DMARC en een
-   verificatie-record). Zet die bij de DNS-beheerder van denwittenhaen.nl en
+   `denwittenhaen.com`. Brevo toont dan 4 DNS-records (DKIM, DMARC en een
+   verificatie-record). Zet die bij de DNS-beheerder van denwittenhaen.com en
    klik in Brevo op *Verify*.
 3. **Afzender toevoegen**: Brevo → *Senders* → *Add a sender* →
-   naam `Den Witten Haen`, e-mail `noreply@denwittenhaen.nl`.
+   naam `Den Witten Haen`, e-mail `noreply@denwittenhaen.com`.
 4. **API-sleutel**: Brevo → *SMTP & API* → *API Keys* → *Generate a new API key*.
 5. **Secrets in Supabase**: Supabase → *Edge Functions* → *Secrets*:
    - `BREVO_API_KEY` = de sleutel uit stap 4
-   - `FROM_EMAIL` = `noreply@denwittenhaen.nl` (optioneel, is al de standaard)
+   - `FROM_EMAIL` = `noreply@denwittenhaen.com` (optioneel, is al de standaard)
    - `RESTAURANT_EMAIL` = `denwittenhaen@philadelphia.nl` (optioneel, is al de standaard)
 6. **Function deployen**: Supabase → *Edge Functions* → `send-email` → *Deploy*
    met de inhoud van `supabase/functions/send-email/index.ts`, of via de CLI:
    `supabase functions deploy send-email`.
 7. **Testen**: maak een reservering op de site met je eigen e-mailadres.
 
-Let op: de website draait op `denwittenhaen.com`, de afzender op
-`denwittenhaen.nl`. Dat is prima, zolang `denwittenhaen.nl` in Brevo is
-geverifieerd. Wil je liever `noreply@denwittenhaen.com`, verifieer dan dat
-domein en zet `FROM_EMAIL` daarop.
+Het domein in Brevo is `denwittenhaen.com` (zelfde als de website). Wil je een
+ander afzenderadres, verifieer dat domein dan in Brevo en zet `FROM_EMAIL` erop.

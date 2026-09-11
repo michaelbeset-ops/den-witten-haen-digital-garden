@@ -3,7 +3,7 @@
 //
 // Secrets (Supabase → Edge Functions → Secrets):
 //   BREVO_API_KEY     verplicht
-//   FROM_EMAIL        afzender, standaard noreply@denwittenhaen.nl (domein moet in Brevo geverifieerd zijn)
+//   FROM_EMAIL        afzender, standaard noreply@denwittenhaen.com (domein moet in Brevo geverifieerd zijn)
 //   RESTAURANT_EMAIL  inbox van het restaurant, standaard denwittenhaen@philadelphia.nl
 
 const CORS_HEADERS = {
@@ -26,7 +26,7 @@ const RESTAURANT = {
   hours: 'Ma t/m vr 10:00 – 16:00 · Za 10:00 – 17:00 · Zo gesloten',
 }
 
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'noreply@denwittenhaen.nl'
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'noreply@denwittenhaen.com'
 const FROM_NAME = RESTAURANT.name
 
 const RESERVATION_TYPE_LABELS: Record<string, string> = {
