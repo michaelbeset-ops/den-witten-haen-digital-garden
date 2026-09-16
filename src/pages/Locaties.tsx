@@ -10,7 +10,6 @@ import {
 } from "@/lib/reservations";
 
 import gevelImage from "@/assets/pand-groenmarkt.jpg";
-import gardenImage from "@/assets/garden.jpg";
 
 const spaces = [
   {
@@ -97,15 +96,6 @@ const LocationsPage = () => (
             <p className="text-sm text-muted-foreground font-sans leading-relaxed sm:pt-1">{s.desc}</p>
           </div>
         ))}
-      </div>
-
-      <div className="rounded-lg overflow-hidden shadow-lg mb-10">
-        <img
-          src={gardenImage}
-          alt="De stadstuin met terras achter Den Witten Haen"
-          className="w-full h-56 sm:h-72 md:h-80 object-cover"
-          loading="lazy"
-        />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
