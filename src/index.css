@@ -62,4 +62,77 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Als je in Safari op iOS voorbij de boven- of onderkant sleept, toont de
+     browser de achtergrond van het canvas. Met de lichte paginakleur gaf dat
+     een lelijke lichte balk boven de donkere hero en onder de donkere
+     voettekst. Het canvas krijgt daarom de donkere huiskleur; <body> houdt
+     gewoon de lichte achtergrond, dus de pagina zelf verandert niet. */
+  html {
+    background-color: hsl(var(--foreground));
+  }
+
+  body {
+    min-height: 100vh;
+  }
+}
+
+/* Hero precies zo hoog als het scherm. 100vh telt op mobiel de adresbalk mee,
+   waardoor de onderkant wegvalt; 100svh is de hoogte die daadwerkelijk
+   zichtbaar is. Oudere browsers die svh niet kennen, houden de vh-regel. */
+.hero-screen {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* Uitsnede van de herofoto. De foto staat rechtop, dus op een breed scherm
+   valt er veel weg. Op mobiel schuiven we naar rechts en op desktop iets
+   omhoog, zodat de gedekte tafels en de zaal in beeld komen in plaats van
+   alleen de bloemen op de voorgrond. */
+.hero-crop {
+  object-position: 72% 50%;
+}
+@media (min-width: 768px) {
+  .hero-crop {
+    object-position: 50% 35%;
+  }
+}
+
+/* Zijmarge die precies uitlijnt met "container mx-auto px-4 max-w-5xl".
+   De doorschuifbare rijen lopen zelf van rand tot rand, zodat kaarten netjes
+   in en uit beeld schuiven, maar de eerste kaart begint op dezelfde lijn als
+   de kop erboven. */
+.edge-pad {
+  padding-left: max(1rem, calc((100% - 64rem) / 2 + 1rem));
+  padding-right: max(1rem, calc((100% - 64rem) / 2 + 1rem));
+}
+
+/* Zonder deze regel trekt scroll-snap de eerste kaart tegen de linkerrand en
+   verdwijnt de marge hierboven. Met scroll-padding klikt de kaart vast op
+   dezelfde lijn als de kop. */
+.edge-scroll {
+  scroll-padding-left: max(1rem, calc((100% - 64rem) / 2 + 1rem));
+}
+
+/* Horizontaal scrollbare rijen zonder zichtbare scrollbalk. */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS Safari (and other iOS browsers, which all use WebKit) render an empty
+   <input type="date"> with no visible placeholder text, unlike Chromium/Firefox.
+   This overlay fills that gap; @supports scopes it to iOS only so it doesn't
+   double up with the native placeholder shown elsewhere. */
+.date-placeholder-ios {
+  display: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .date-placeholder-ios {
+    display: block;
+  }
 }

@@ -1,6 +1,7 @@
--- Den Witten Haen — reservations schema
+-- Den Witten Haen: reservations schema
 -- Run this in the Supabase SQL editor to set up the database schema from scratch.
--- For an existing database, run supabase/migrations/001_add_seating_and_closures.sql instead.
+-- For an existing database, run the files in supabase/migrations/ in order instead.
+-- This file reflects the state after migration 004.
 
 create table if not exists reservations (
   id uuid default gen_random_uuid() primary key,
@@ -13,7 +14,8 @@ create table if not exists reservations (
   guests integer not null,
   message text,
   status text default 'aangevraagd',
-  seating_preference text
+  seating_preference text,
+  reservation_type text not null default 'lunch'
 );
 
 -- Row Level Security
@@ -40,7 +42,8 @@ create table if not exists blocked_slots (
   id uuid default gen_random_uuid() primary key,
   created_at timestamptz default now(),
   date date not null,
-  time text,       -- null = whole day blocked
+  time_from text,  -- null = whole day blocked
+  time_to text,    -- null (with time_from set) = from time_from until end of day
   reason text
 );
 
@@ -74,7 +77,7 @@ grant execute on function public.get_slot_counts(date) to anon;
 
 -- ─── RPC: create reservation ──────────────────────────────────────────────────
 -- Rolling 2-hour window capacity check (max 48 concurrent guests).
--- Also checks blocked_slots so a closed day/slot cannot be booked.
+-- Also checks blocked_slots (range-based) so a closed day/slot cannot be booked.
 create or replace function public.create_reservation(
   p_name    text,
   p_email   text,
@@ -83,7 +86,8 @@ create or replace function public.create_reservation(
   p_time    text,
   p_guests  integer,
   p_message text    default null,
-  p_seating text    default null
+  p_seating text    default null,
+  p_type    text    default 'lunch'
 )
 returns uuid
 language plpgsql
@@ -96,23 +100,37 @@ declare
   sub_load integer;
   k        integer;
 begin
-  -- Check if the whole day is blocked
+  -- Basisvalidatie (de frontend valideert ook, maar de functie is publiek aanroepbaar)
+  if p_guests is null or p_guests < 1 or p_guests > 8 then
+    raise exception 'Ongeldig aantal personen' using errcode = 'P0003';
+  end if;
+  if p_time !~ '^\d{2}:\d{2}$' then
+    raise exception 'Ongeldig tijdslot' using errcode = 'P0003';
+  end if;
+  if p_date < current_date then
+    raise exception 'Datum ligt in het verleden' using errcode = 'P0003';
+  end if;
+
+  -- Hele dag gesloten?
   if exists (
     select 1 from blocked_slots
-    where date = p_date and time is null
+    where date = p_date and time_from is null
   ) then
     raise exception 'Op deze dag zijn wij gesloten' using errcode = 'P0002';
   end if;
 
-  -- Check if the specific time slot is blocked (left() guards against HH:MM:SS in old data)
+  -- Tijdslot valt binnen een geblokkeerde range?
   if exists (
     select 1 from blocked_slots
-    where date = p_date and left(time, 5) = left(p_time, 5)
+    where date = p_date
+      and time_from is not null
+      and p_time >= time_from
+      and (time_to is null or p_time <= time_to)
   ) then
     raise exception 'Dit tijdslot is gesloten' using errcode = 'P0002';
   end if;
 
-  -- Rolling window: check 4 sub-windows (T+0, T+30, T+60, T+90 min)
+  -- Rollend 2-uurs venster: max 48 gasten gelijktijdig
   for k in 0..3 loop
     select coalesce(sum(r.guests), 0) + p_guests
     into sub_load
@@ -131,12 +149,14 @@ begin
     raise exception 'Dit tijdslot heeft niet genoeg ruimte' using errcode = 'P0001';
   end if;
 
-  insert into reservations (name, email, phone, date, time, guests, message, status, seating_preference)
-  values (p_name, p_email, p_phone, p_date, p_time, p_guests, p_message, 'aangevraagd', p_seating)
+  insert into reservations (name, email, phone, date, time, guests, message, status, seating_preference, reservation_type)
+  values (p_name, p_email, p_phone, p_date, p_time, p_guests, p_message, 'aangevraagd', p_seating, coalesce(p_type, 'lunch'))
   returning id into new_id;
 
   return new_id;
 end;
 $$;
 
-grant execute on function public.create_reservation(text, text, text, date, text, integer, text, text) to anon;
+-- create or replace behoudt grants, maar expliciet is veiliger
+grant execute on function public.create_reservation(text, text, text, date, text, integer, text, text, text) to anon;
+grant execute on function public.create_reservation(text, text, text, date, text, integer, text, text, text) to authenticated;

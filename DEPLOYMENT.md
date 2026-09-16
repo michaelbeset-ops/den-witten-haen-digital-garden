@@ -1,3 +1,22 @@
+> **Let op (status september 2026):** op dit moment wordt de site live gezet via
+> **GitHub Pages** (`.github/workflows/deploy.yml`, domein `denwittenhaen.com` via
+> `public/CNAME`). De Vimexx-FTP-workflow hieronder is beschreven, maar het bestand
+> `deploy-vimexx.yml` bestaat (nog) niet in deze repo.
+>
+> **Database:** voer de migraties in `supabase/migrations/` op volgorde uit in de
+> Supabase SQL Editor. Nog niet gedraaid en wel nodig:
+>
+> - `004_fix_create_reservation_blocked_ranges.sql` herstelt de reserveringsfunctie.
+>   Zonder deze migratie faalt elke online reservering.
+> - `005_guest_cancellation.sql` voegt de annuleerlink toe die in elke
+>   bevestigingsmail staat. Zonder deze migratie werkt die link niet en moeten
+>   gasten bellen om te annuleren.
+>
+> **Supabase pauzeert een gratis project na zeven dagen zonder activiteit.** De
+> workflow `.github/workflows/supabase-keepalive.yml` voorkomt dat: die doet elke
+> werkdag een klein leesverzoek. Daarvoor moeten de secrets `VITE_SUPABASE_URL` en
+> `VITE_SUPABASE_ANON_KEY` in GitHub staan (die zijn er al voor de build).
+
 # Live zetten via Vimexx
 
 De site bouwt naar statische bestanden (`npm run build` → map `dist/`) en wordt via
@@ -62,3 +81,32 @@ VITE_SUPABASE_URL=... VITE_SUPABASE_ANON_KEY=... npm run build
 
 Upload daarna de volledige inhoud van `dist/` (inclusief het verborgen bestand
 `.htaccess`) via FTP of het Vimexx-bestandsbeheer naar `public_html/`.
+
+
+## E-mail instellen (Brevo, afzender noreply@denwittenhaen.com)
+
+De bevestigings-, annulerings- en groepsaanvraagmails worden verstuurd door de
+Supabase Edge Function `send-email` via Brevo. Afzender is
+`noreply@denwittenhaen.com`; antwoorden van gasten gaan automatisch naar
+`denwittenhaen@philadelphia.nl` (reply-to).
+
+1. **Brevo-account**: maak een gratis account op https://www.brevo.com (300 mails/dag).
+2. **Domein verifiëren** (anders belanden mails in spam of worden ze geweigerd):
+   Brevo → *Senders, Domains & Dedicated IPs* → *Domains* → *Add a domain* →
+   `denwittenhaen.com`. Brevo toont dan 4 DNS-records (DKIM, DMARC en een
+   verificatie-record). Zet die bij de DNS-beheerder van denwittenhaen.com en
+   klik in Brevo op *Verify*.
+3. **Afzender toevoegen**: Brevo → *Senders* → *Add a sender* →
+   naam `Den Witten Haen`, e-mail `noreply@denwittenhaen.com`.
+4. **API-sleutel**: Brevo → *SMTP & API* → *API Keys* → *Generate a new API key*.
+5. **Secrets in Supabase**: Supabase → *Edge Functions* → *Secrets*:
+   - `BREVO_API_KEY` = de sleutel uit stap 4
+   - `FROM_EMAIL` = `noreply@denwittenhaen.com` (optioneel, is al de standaard)
+   - `RESTAURANT_EMAIL` = `denwittenhaen@philadelphia.nl` (optioneel, is al de standaard)
+6. **Function deployen**: Supabase → *Edge Functions* → `send-email` → *Deploy*
+   met de inhoud van `supabase/functions/send-email/index.ts`, of via de CLI:
+   `supabase functions deploy send-email`.
+7. **Testen**: maak een reservering op de site met je eigen e-mailadres.
+
+Het domein in Brevo is `denwittenhaen.com` (zelfde als de website). Wil je een
+ander afzenderadres, verifieer dat domein dan in Brevo en zet `FROM_EMAIL` erop.
