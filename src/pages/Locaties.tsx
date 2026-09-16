@@ -9,6 +9,7 @@ import {
   PHONE_NUMBER,
 } from "@/lib/reservations";
 
+import gevelImage from "@/assets/pand-groenmarkt.jpg";
 import gardenImage from "@/assets/garden.jpg";
 
 const spaces = [
@@ -22,7 +23,7 @@ const spaces = [
   },
   {
     name: "De zalen",
-    desc: "Twee monumentale zalen voor groepen, vergaderingen en feesten, inclusief catering.",
+    desc: "Drie monumentale zalen voor groepen, vergaderingen en feesten, inclusief catering.",
   },
 ];
 
@@ -37,10 +38,11 @@ const LocationsPage = () => (
 
       <div className="rounded-lg overflow-hidden shadow-lg mb-10">
         <img
-          src={gardenImage}
-          alt="De stadstuin achter Den Witten Haen"
-          className="w-full h-56 sm:h-72 object-cover"
-          loading="lazy"
+          src={gevelImage}
+          alt="Het pand van Den Witten Haen aan de Groenmarkt in Dordrecht"
+          className="w-full h-56 sm:h-72 md:h-96 object-cover"
+          width={1600}
+          height={1200}
         />
       </div>
 
@@ -95,6 +97,15 @@ const LocationsPage = () => (
             <p className="text-sm text-muted-foreground font-sans leading-relaxed sm:pt-1">{s.desc}</p>
           </div>
         ))}
+      </div>
+
+      <div className="rounded-lg overflow-hidden shadow-lg mb-10">
+        <img
+          src={gardenImage}
+          alt="De stadstuin met terras achter Den Witten Haen"
+          className="w-full h-56 sm:h-72 md:h-80 object-cover"
+          loading="lazy"
+        />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
