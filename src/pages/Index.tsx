@@ -72,16 +72,21 @@ const Index = () => (
       </div>
     </section>
 
-    {/* Korte kenmerken */}
+    {/* Korte kenmerken. Op mobiel horizontaal doorschuifbaar, vanaf sm drie
+        kolommen naast elkaar met scheidslijnen. */}
     <section className="bg-card border-y border-border">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+      <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory edge-scroll sm:overflow-visible">
+        <div className={`flex gap-8 ${EDGE} sm:grid sm:grid-cols-3 sm:gap-0 sm:divide-x divide-border`}>
           {facts.map((f) => (
-            <div key={f.title} className="py-7 sm:py-9 sm:px-8 text-center">
+            <div
+              key={f.title}
+              className="snap-start shrink-0 w-60 py-7 text-left sm:w-auto sm:shrink sm:py-9 sm:px-8 sm:text-center"
+            >
               <h2 className="font-serif text-lg text-foreground mb-1">{f.title}</h2>
               <p className="text-sm text-muted-foreground font-sans leading-relaxed">{f.desc}</p>
             </div>
           ))}
+          <div className="shrink-0 w-1 sm:hidden" aria-hidden="true" />
         </div>
       </div>
     </section>
@@ -148,7 +153,7 @@ const Index = () => (
 
     {/* Over Den Witten Haen */}
     <section id="over-ons" className="pt-10 pb-16 md:pb-20 scroll-mt-24">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
+      <div className="container mx-auto px-4 max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
         <div>
           <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Ons verhaal</p>
           <h2 className="font-serif text-3xl md:text-4xl mb-6">Over Den Witten Haen</h2>
