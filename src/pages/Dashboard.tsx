@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { supabase, type Reservation } from '@/lib/supabase'
-import { sendCancellationEmail } from '@/lib/email'
+import { cancelUrl, sendCancellationEmail, sendConfirmedEmail } from '@/lib/email'
 import { todayStr } from '@/lib/reservations'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ const fmtTimeRange = (c: BlockedSlot): React.ReactNode => {
   if (!c.time_from) return <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">Hele dag</span>
   if (!c.time_to) return `Vanaf ${c.time_from}`
   if (c.time_to === c.time_from) return c.time_from
-  return `${c.time_from} – ${c.time_to}`
+  return `${c.time_from} tot ${c.time_to}`
 }
 
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const StatusBadge = ({ status }: { status: Reservation['status'] }) => {
   return <span className={`text-xs font-sans font-medium px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>
 }
 
-// All possible time slots (Thu–Sat range covers Mon–Wed too)
+// Alle mogelijke tijdsloten (zaterdag is het langst en dekt de andere dagen)
 const ALL_SLOTS = [
   '10:00','10:30','11:00','11:30','12:00','12:30',
   '13:00','13:30','14:00','14:30','15:00','15:30','16:00',
@@ -125,7 +125,7 @@ const ClosuresSection = () => {
                 onChange={e => { setTimeFrom(e.target.value); setTimeTo('') }}
                 className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">— Hele dag —</option>
+                <option value="">Hele dag</option>
                 {ALL_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
@@ -137,7 +137,7 @@ const ClosuresSection = () => {
                   onChange={e => setTimeTo(e.target.value)}
                   className="w-full font-sans text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  <option value="">— Einde dag —</option>
+                  <option value="">Tot einde dag</option>
                   {toSlots.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
@@ -183,7 +183,7 @@ const ClosuresSection = () => {
               <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{fmtDate(c.date)}</td>
                 <td className="px-4 py-3 text-sm font-sans text-foreground whitespace-nowrap">{fmtTimeRange(c)}</td>
-                <td className="px-4 py-3 text-sm font-sans text-muted-foreground">{c.reason ?? '—'}</td>
+                <td className="px-4 py-3 text-sm font-sans text-muted-foreground">{c.reason ?? 'Geen reden opgegeven'}</td>
                 <td className="px-4 py-3">
                   <button
                     onClick={() => handleDelete(c.id)}
@@ -237,6 +237,7 @@ const Dashboard = () => {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [fetchError, setFetchError] = useState('')
+  const [actionError, setActionError] = useState('')
   const [actionLoading, setActionLoading] = useState<ActionLoading>({})
 
   const fetchReservations = useCallback(async () => {
@@ -283,22 +284,47 @@ const Dashboard = () => {
   }, [fetchReservations])
 
   const handleAnnuleren = async (r: Reservation) => {
+    const ok = window.confirm(
+      `Reservering van ${r.name} op ${fmtDate(r.date)} om ${r.time} annuleren?\n\n` +
+      `${r.name} krijgt hiervan automatisch bericht per e-mail.`,
+    )
+    if (!ok) return
+
+    setActionError('')
     setActionLoading(prev => ({ ...prev, [r.id]: 'annuleren' }))
     const { error } = await supabase.from('reservations').update({ status: 'geannuleerd' }).eq('id', r.id)
-    if (!error) {
-      sendCancellationEmail({ name: r.name, email: r.email, date: r.date, time: r.time })
-      setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'geannuleerd' } : item))
-    }
     setActionLoading(prev => ({ ...prev, [r.id]: null }))
+    if (error) {
+      setActionError('Annuleren is niet gelukt. Controleer uw verbinding en probeer het opnieuw.')
+      return
+    }
+    setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'geannuleerd' } : item))
+    const sent = await sendCancellationEmail({ name: r.name, email: r.email, date: r.date, time: r.time })
+    if (!sent) setActionError(`De reservering is geannuleerd, maar de e-mail aan ${r.name} kon niet worden verstuurd. Neem zelf even contact op.`)
   }
 
   const handleBevestigen = async (r: Reservation) => {
+    setActionError('')
     setActionLoading(prev => ({ ...prev, [r.id]: 'bevestigen' }))
     const { error } = await supabase.from('reservations').update({ status: 'bevestigd' }).eq('id', r.id)
-    if (!error) {
-      setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'bevestigd' } : item))
-    }
     setActionLoading(prev => ({ ...prev, [r.id]: null }))
+    if (error) {
+      setActionError('Bevestigen is niet gelukt. Controleer uw verbinding en probeer het opnieuw.')
+      return
+    }
+    setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'bevestigd' } : item))
+    const sent = await sendConfirmedEmail({
+      name: r.name,
+      email: r.email,
+      date: r.date,
+      time: r.time,
+      guests: r.guests,
+      reservationType: r.reservation_type ?? 'lunch',
+      seating: r.seating_preference ?? null,
+      message: r.message ?? null,
+      cancelUrl: cancelUrl(r.id),
+    })
+    if (!sent) setActionError(`De reservering is bevestigd, maar de e-mail aan ${r.name} kon niet worden verstuurd. Neem zelf even contact op.`)
   }
 
   const handleLogout = async () => {
@@ -307,6 +333,10 @@ const Dashboard = () => {
   }
 
   const colSpan = allDates ? 9 : 8
+  // Aantal gasten dat daadwerkelijk verwacht wordt, dus zonder annuleringen.
+  const activeGuests = reservations
+    .filter(r => r.status !== 'geannuleerd')
+    .reduce((sum, r) => sum + r.guests, 0)
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background md:overflow-hidden">
@@ -407,6 +437,7 @@ const Dashboard = () => {
                 {!loadingData && (
                   <span className="text-sm font-sans text-muted-foreground whitespace-nowrap">
                     {reservations.length} {reservations.length === 1 ? 'reservering' : 'reserveringen'}
+                    {activeGuests > 0 && ` · ${activeGuests} ${activeGuests === 1 ? 'gast' : 'gasten'}`}
                   </span>
                 )}
               </div>
@@ -414,6 +445,14 @@ const Dashboard = () => {
 
             {fetchError && (
               <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm font-sans">{fetchError}</div>
+            )}
+            {actionError && (
+              <div className="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-sm font-sans flex items-start justify-between gap-3">
+                <span>{actionError}</span>
+                <button onClick={() => setActionError('')} aria-label="Melding sluiten" className="shrink-0 opacity-60 hover:opacity-100">
+                  <X size={16} />
+                </button>
+              </div>
             )}
 
             {/* Desktop table */}
@@ -462,7 +501,7 @@ const Dashboard = () => {
                               {r.seating_preference.charAt(0).toUpperCase() + r.seating_preference.slice(1)}
                             </span>
                           )}
-                          <span className="truncate block">{r.message || (r.seating_preference || r.reservation_type === 'high_tea' ? '' : '—')}</span>
+                          <span className="truncate block">{r.message || ''}</span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3">

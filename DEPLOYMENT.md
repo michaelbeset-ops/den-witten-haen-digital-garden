@@ -3,10 +3,19 @@
 > `public/CNAME`). De Vimexx-FTP-workflow hieronder is beschreven, maar het bestand
 > `deploy-vimexx.yml` bestaat (nog) niet in deze repo.
 >
-> **Database:** voer na het uitrollen eenmalig
-> `supabase/migrations/004_fix_create_reservation_blocked_ranges.sql` uit in de
-> Supabase SQL Editor. Zonder deze migratie faalt elke online reservering
-> (migratie 003 gebruikte een kolom die in migratie 002 is verwijderd).
+> **Database:** voer de migraties in `supabase/migrations/` op volgorde uit in de
+> Supabase SQL Editor. Nog niet gedraaid en wel nodig:
+>
+> - `004_fix_create_reservation_blocked_ranges.sql` herstelt de reserveringsfunctie.
+>   Zonder deze migratie faalt elke online reservering.
+> - `005_guest_cancellation.sql` voegt de annuleerlink toe die in elke
+>   bevestigingsmail staat. Zonder deze migratie werkt die link niet en moeten
+>   gasten bellen om te annuleren.
+>
+> **Supabase pauzeert een gratis project na zeven dagen zonder activiteit.** De
+> workflow `.github/workflows/supabase-keepalive.yml` voorkomt dat: die doet elke
+> werkdag een klein leesverzoek. Daarvoor moeten de secrets `VITE_SUPABASE_URL` en
+> `VITE_SUPABASE_ANON_KEY` in GitHub staan (die zijn er al voor de build).
 
 # Live zetten via Vimexx
 

@@ -1,4 +1,4 @@
--- Den Witten Haen — reservations schema
+-- Den Witten Haen: reservations schema
 -- Run this in the Supabase SQL editor to set up the database schema from scratch.
 -- For an existing database, run the files in supabase/migrations/ in order instead.
 -- This file reflects the state after migration 004.

@@ -1,0 +1,50 @@
+name: Supabase wakker houden
+
+# Een gratis Supabase-project wordt na zeven dagen zonder activiteit
+# gepauzeerd. Dan kan niemand meer reserveren totdat iemand het handmatig
+# hervat. Deze workflow doet elke werkdag een klein, ongevaarlijk verzoek aan
+# de database, zodat dat niet gebeurt.
+
+on:
+  schedule:
+    # Elke maandag tot en met vrijdag om 07:12 UTC. Een oneven minuut, zodat we
+    # niet samenvallen met de drukte op het hele uur bij GitHub Actions.
+    - cron: "12 7 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Database aanroepen
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "De secrets VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY ontbreken."
+            exit 1
+          fi
+
+          # Leest alleen het aantal gasten per tijdslot voor vandaag. Geen
+          # persoonsgegevens, geen schrijfactie.
+          today="$(date -u +%F)"
+
+          status=$(curl -sS -o /tmp/response.json -w '%{http_code}' \
+            -X POST "${SUPABASE_URL}/rest/v1/rpc/get_slot_counts" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"check_date\":\"${today}\"}")
+
+          echo "HTTP-status: ${status}"
+
+          if [ "${status}" != "200" ]; then
+            echo "Onverwacht antwoord van Supabase:"
+            cat /tmp/response.json
+            exit 1
+          fi
+
+          echo "Supabase reageert normaal; het project blijft actief."

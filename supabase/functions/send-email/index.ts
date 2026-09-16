@@ -1,10 +1,16 @@
 // Supabase Edge Function: send-email
 // Verstuurt reserveringsmails via Brevo.
 //
-// Secrets (Supabase → Edge Functions → Secrets):
+// Secrets (Supabase, Edge Functions, Secrets):
 //   BREVO_API_KEY     verplicht
 //   FROM_EMAIL        afzender, standaard noreply@denwittenhaen.com (domein moet in Brevo geverifieerd zijn)
 //   RESTAURANT_EMAIL  inbox van het restaurant, standaard denwittenhaen@philadelphia.nl
+//
+// Berichttypen:
+//   received        naar de gast, direct na het boeken
+//   confirmed       naar de gast, als het personeel bevestigt
+//   cancellation    naar de gast (personeel annuleert) of naar het restaurant (gast annuleert zelf)
+//   group_request   naar het restaurant, aanvraag voor meer dan 8 personen
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +29,7 @@ const RESTAURANT = {
   email: Deno.env.get('RESTAURANT_EMAIL') ?? 'denwittenhaen@philadelphia.nl',
   site: 'https://denwittenhaen.com',
   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Den+Witten+Haen+Groenmarkt+19-B+Dordrecht',
-  hours: 'Ma t/m vr 10:00 – 16:00 · Za 10:00 – 17:00 · Zo gesloten',
+  hours: 'Ma t/m vr 10:00 tot 16:00 · Za 10:00 tot 17:00 · Zo gesloten',
 }
 
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'noreply@denwittenhaen.com'
@@ -35,7 +41,7 @@ const RESERVATION_TYPE_LABELS: Record<string, string> = {
 }
 const SEATING_LABELS: Record<string, string> = {
   binnen: 'Binnen',
-  buiten: 'Buiten (terras / tuin)',
+  buiten: 'Buiten (terras of tuin)',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -51,6 +57,13 @@ const escape = (v: unknown): string =>
 
 const nl2br = (v: string): string => escape(v).replace(/\r?\n/g, '<br>')
 
+// Alleen links naar onze eigen site toestaan, zodat een meegestuurde URL nooit
+// een vreemde bestemming in de mail kan zetten.
+const safeUrl = (v: unknown): string => {
+  const s = String(v ?? '')
+  return /^https?:\/\/[^\s"'<>]+$/.test(s) ? s : ''
+}
+
 function formatDutchDate(dateStr: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
   const d = new Date(dateStr + 'T12:00:00')
@@ -60,7 +73,7 @@ function formatDutchDate(dateStr: string): string {
 
 const guestsLabel = (n: number) => `${n} ${n === 1 ? 'persoon' : 'personen'}`
 
-// Kleuren sluiten aan bij de website (warm bruin, zachtgroen, crème).
+// Kleuren sluiten aan bij de website: warm bruin, zachtgroen, crème.
 const C = {
   bg: '#f0ebe0',
   card: '#fffdf8',
@@ -168,21 +181,33 @@ const HIGH_TEA_NOTICE = `
       </tr>
     </table>`
 
-// ─── E-mails ──────────────────────────────────────────────────────────────────
+const cancelLine = (url: string) => url
+  ? `<p style="margin:0 0 24px 0;font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;text-align:center;">
+      Kunt u er toch niet bij zijn?
+      <a href="${url}" style="color:${C.green};">Annuleer uw reservering online</a>.
+    </p>`
+  : ''
 
-type ConfirmationInput = {
+// ─── Reserveringsmails naar de gast ───────────────────────────────────────────
+
+type ReservationInput = {
   name: string; date: string; time: string; guests: number
   reservationType?: string; seating?: string | null; message?: string | null
+  cancelUrl?: string
 }
 
-function buildConfirmation(r: ConfirmationInput) {
+function buildReservationMail(r: ReservationInput, confirmed: boolean) {
   const typeLabel = RESERVATION_TYPE_LABELS[r.reservationType ?? ''] ?? RESERVATION_TYPE_LABELS.lunch
   const formattedDate = formatDutchDate(r.date)
   const seatingLabel = r.seating ? SEATING_LABELS[r.seating] : null
   const isHighTea = r.reservationType === 'high_tea'
+  const url = safeUrl(r.cancelUrl)
 
-  const subject = `Uw reservering bij Den Witten Haen op ${formattedDate.toLowerCase()} om ${r.time}`
-  const preheader = `${typeLabel} voor ${guestsLabel(r.guests)} op ${formattedDate.toLowerCase()} om ${r.time}. Tot dan!`
+  const subject = confirmed
+    ? `Bevestigd: uw reservering op ${formattedDate.toLowerCase()} om ${r.time}`
+    : `Ontvangen: uw reservering op ${formattedDate.toLowerCase()} om ${r.time}`
+
+  const preheader = `${typeLabel} voor ${guestsLabel(r.guests)} op ${formattedDate.toLowerCase()} om ${r.time}.`
 
   const rows = [
     detailRow('Reservering', escape(typeLabel)),
@@ -191,48 +216,75 @@ function buildConfirmation(r: ConfirmationInput) {
     detailRow('Aantal personen', escape(guestsLabel(r.guests))),
     seatingLabel ? detailRow('Zitplaatsvoorkeur', escape(seatingLabel)) : '',
     r.message ? detailRow('Uw opmerking', `<span style="font-size:15px;color:${C.text};">${nl2br(r.message)}</span>`) : '',
-    detailRow('Locatie', `${escape(RESTAURANT.street)}, ${escape(RESTAURANT.city)}<br><a href="${RESTAURANT.mapsUrl}" style="font-family:${SANS};font-size:13px;color:${C.green};text-decoration:none;">Routebeschrijving &rsaquo;</a>`, true),
+    detailRow(
+      'Locatie',
+      `${escape(RESTAURANT.street)}, ${escape(RESTAURANT.city)}<br><a href="${RESTAURANT.mapsUrl}" style="font-family:${SANS};font-size:13px;color:${C.green};text-decoration:none;">Routebeschrijving &rsaquo;</a>`,
+      true,
+    ),
   ].join('')
 
+  const title = confirmed ? 'Uw reservering is bevestigd' : 'Wij hebben uw reservering ontvangen'
+  const intro = confirmed
+    ? `Beste ${escape(r.name)}, uw reservering staat genoteerd.<br>We kijken ernaar uit u te verwelkomen.`
+    : `Beste ${escape(r.name)}, bedankt voor uw reservering.<br>Hieronder vindt u de gegevens.`
+
+  const statusNote = confirmed
+    ? ''
+    : `<p style="margin:0 0 24px 0;font-family:${SANS};font-size:14px;color:${C.text};line-height:1.8;">
+        <strong style="color:${C.dark};">Wat gebeurt er nu?</strong><br>
+        Wij nemen uw reservering door en sturen u een bevestiging zodra deze definitief is.
+        Hoort u onverhoopt niets, bel ons dan gerust op
+        <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a>.
+      </p>`
+
   const html = emailWrapper(preheader, `
-    ${heading('Uw reservering is bevestigd', `Beste ${escape(r.name)}, bedankt voor uw reservering.<br>We kijken ernaar uit u te verwelkomen.`)}
+    ${heading(title, intro)}
     ${detailTable(rows)}
     ${isHighTea ? HIGH_TEA_NOTICE : ''}
+    ${statusNote}
     <p style="margin:0 0 20px 0;font-family:${SANS};font-size:14px;color:${C.text};line-height:1.8;">
-      <strong style="color:${C.dark};">Goed om te weten</strong><br>
-      ${seatingLabel ? 'Uw zitplaatsvoorkeur houden we in gedachten, maar kunnen we niet altijd garanderen.<br>' : ''}
-      Komt u later, of wilt u iets wijzigen of annuleren? Laat het ons even weten via
+      ${seatingLabel ? 'Met uw zitplaatsvoorkeur houden wij rekening, maar wij kunnen een plek niet garanderen.<br>' : ''}
+      Wilt u iets wijzigen? Laat het ons weten via
       <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a> of
       <a href="mailto:${escape(RESTAURANT.email)}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.email)}</a>.
     </p>
+    ${cancelLine(url)}
     ${signOff()}
   `, 'U ontvangt deze e-mail omdat u een reservering heeft gemaakt via denwittenhaen.com. Antwoorden op deze e-mail komen bij het restaurant terecht.')
 
   const text = [
     `Beste ${r.name},`,
     '',
-    `Bedankt voor uw reservering bij ${RESTAURANT.name}. Uw reservering is bevestigd.`,
+    confirmed
+      ? `Uw reservering bij ${RESTAURANT.name} is bevestigd.`
+      : `Bedankt voor uw reservering bij ${RESTAURANT.name}. Wij hebben hem ontvangen en sturen u een bevestiging zodra deze definitief is.`,
     '',
-    `Reservering:     ${typeLabel}`,
-    `Datum:           ${formattedDate}`,
-    `Tijd:            ${r.time} uur`,
-    `Aantal personen: ${guestsLabel(r.guests)}`,
+    `Reservering:       ${typeLabel}`,
+    `Datum:             ${formattedDate}`,
+    `Tijd:              ${r.time} uur`,
+    `Aantal personen:   ${guestsLabel(r.guests)}`,
     seatingLabel ? `Zitplaatsvoorkeur: ${seatingLabel}` : null,
-    r.message ? `Uw opmerking:    ${r.message}` : null,
-    `Locatie:         ${RESTAURANT.street}, ${RESTAURANT.city}`,
+    r.message ? `Uw opmerking:      ${r.message}` : null,
+    `Locatie:           ${RESTAURANT.street}, ${RESTAURANT.city}`,
     '',
-    isHighTea ? 'Annuleringsvoorwaarde high tea: annuleren kan tot uiterlijk 48 uur van tevoren. Daarna wordt de high tea alsnog in rekening gebracht.\n' : null,
-    `Wijzigen of annuleren? Bel ${RESTAURANT.phone} of mail ${RESTAURANT.email}.`,
+    isHighTea
+      ? 'Annuleringsvoorwaarde high tea: annuleren kan tot uiterlijk 48 uur van tevoren. Daarna wordt de high tea alsnog in rekening gebracht.\n'
+      : null,
+    url ? `Annuleren kan online via: ${url}` : null,
+    `Wijzigen? Bel ${RESTAURANT.phone} of mail ${RESTAURANT.email}.`,
     '',
     'Met vriendelijke groet,',
     `Team ${RESTAURANT.name}`,
-    `${RESTAURANT.street}, ${RESTAURANT.city} · ${RESTAURANT.hours}`,
+    `${RESTAURANT.street}, ${RESTAURANT.city}`,
+    RESTAURANT.hours,
   ].filter(l => l !== null).join('\n')
 
   return { subject, html, text }
 }
 
-function buildCancellation(r: { name: string; date: string; time: string }) {
+// ─── Annulering door het restaurant, naar de gast ─────────────────────────────
+
+function buildCancellationMail(r: { name: string; date: string; time: string }) {
   const formattedDate = formatDutchDate(r.date)
   const subject = `Uw reservering op ${formattedDate.toLowerCase()} is geannuleerd`
   const preheader = `Uw reservering bij Den Witten Haen op ${formattedDate.toLowerCase()} om ${r.time} is geannuleerd.`
@@ -262,27 +314,69 @@ function buildCancellation(r: { name: string; date: string; time: string }) {
   return { subject, html, text }
 }
 
+// ─── Annulering door de gast, naar het restaurant ─────────────────────────────
+
+function buildGuestCancelledMail(r: { name: string; date: string; time: string }) {
+  const formattedDate = formatDutchDate(r.date)
+  const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(r.date)
+    ? new Date(r.date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
+    : r.date
+  const subject = `Annulering door gast: ${r.name} op ${shortDate} om ${r.time}`
+
+  const html = emailWrapper(
+    `${r.name} heeft de reservering van ${shortDate} om ${r.time} geannuleerd.`,
+    `
+    ${heading('Een gast heeft geannuleerd', 'Deze reservering is via de website geannuleerd en staat in het dashboard al op geannuleerd.')}
+    ${detailTable(
+      detailRow('Naam', escape(r.name)) +
+      detailRow('Datum', escape(formattedDate)) +
+      detailRow('Tijd', `${escape(r.time)} uur`, true),
+    )}
+    <p style="margin:0 0 20px 0;font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;text-align:center;">
+      Het tijdslot is weer beschikbaar voor andere gasten. U hoeft niets te doen.
+    </p>
+  `,
+    'Deze e-mail is automatisch verstuurd door het reserveringssysteem op denwittenhaen.com.',
+  )
+
+  const text = [
+    'Een gast heeft via de website geannuleerd.',
+    '',
+    `Naam:  ${r.name}`,
+    `Datum: ${formattedDate}`,
+    `Tijd:  ${r.time} uur`,
+    '',
+    'De reservering staat in het dashboard al op geannuleerd. Het tijdslot is weer beschikbaar.',
+  ].join('\n')
+
+  return { subject, html, text }
+}
+
+// ─── Groepsaanvraag, naar het restaurant ──────────────────────────────────────
+
 type GroupInput = {
   name: string; email: string; phone: string; date: string; guests: number
   message?: string | null; reservationType?: string
 }
 
-function buildGroupRequest(r: GroupInput) {
+function buildGroupRequestMail(r: GroupInput) {
   const typeLabel = RESERVATION_TYPE_LABELS[r.reservationType ?? ''] ?? RESERVATION_TYPE_LABELS.lunch
   const formattedDate = r.date ? formatDutchDate(r.date) : 'Nog niet opgegeven'
-  const shortDate = r.date ? new Date(r.date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' }) : 'datum n.t.b.'
+  const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(r.date)
+    ? new Date(r.date + 'T12:00:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
+    : 'datum nog te bepalen'
   const subject = `Groepsaanvraag: ${guestsLabel(r.guests)} op ${shortDate} (${r.name})`
   const preheader = `${typeLabel} voor ${guestsLabel(r.guests)} · ${r.phone} · ${r.email}`
   const phoneDigits = r.phone.replace(/[^\d+]/g, '')
 
   const rows = [
     detailRow('Naam', escape(r.name)),
-    detailRow('Telefoon', phoneDigits ? `<a href="tel:${escape(phoneDigits)}" style="color:${C.green};text-decoration:none;">${escape(r.phone)}</a>` : '&mdash;'),
+    detailRow('Telefoon', phoneDigits ? `<a href="tel:${escape(phoneDigits)}" style="color:${C.green};text-decoration:none;">${escape(r.phone)}</a>` : 'Niet opgegeven'),
     detailRow('E-mail', `<a href="mailto:${escape(r.email)}" style="color:${C.green};text-decoration:none;">${escape(r.email)}</a>`),
     detailRow('Type', escape(typeLabel)),
     detailRow('Gewenste datum', escape(formattedDate)),
     detailRow('Aantal personen', escape(guestsLabel(r.guests))),
-    detailRow('Opmerking', r.message ? `<span style="font-size:15px;color:${C.text};">${nl2br(r.message)}</span>` : '&mdash;', true),
+    detailRow('Opmerking', r.message ? `<span style="font-size:15px;color:${C.text};">${nl2br(r.message)}</span>` : 'Geen', true),
   ].join('')
 
   const html = emailWrapper(preheader, `
@@ -290,7 +384,8 @@ function buildGroupRequest(r: GroupInput) {
     ${detailTable(rows)}
     ${button(`mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent(`Uw groepsaanvraag bij Den Witten Haen op ${shortDate}`)}`, 'Gast beantwoorden')}
     <p style="margin:0 0 20px 0;font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;text-align:center;">
-      De gast heeft nog <strong>geen bevestiging</strong> ontvangen. Neem contact op om de details en beschikbaarheid af te stemmen.<br>
+      De gast heeft nog <strong>geen bevestiging</strong> ontvangen. Neem contact op om de details en
+      beschikbaarheid af te stemmen.<br>
       Antwoorden op deze e-mail gaat rechtstreeks naar de gast.
     </p>
   `, 'Deze e-mail is automatisch verstuurd door het reserveringsformulier op denwittenhaen.com.')
@@ -299,12 +394,12 @@ function buildGroupRequest(r: GroupInput) {
     'Nieuwe groepsaanvraag via de website',
     '',
     `Naam:            ${r.name}`,
-    `Telefoon:        ${r.phone || '—'}`,
+    `Telefoon:        ${r.phone || 'niet opgegeven'}`,
     `E-mail:          ${r.email}`,
     `Type:            ${typeLabel}`,
     `Gewenste datum:  ${formattedDate}`,
     `Aantal personen: ${guestsLabel(r.guests)}`,
-    `Opmerking:       ${r.message || '—'}`,
+    `Opmerking:       ${r.message || 'geen'}`,
     '',
     'De gast heeft nog geen bevestiging ontvangen. Neem contact op om de details af te stemmen.',
   ].join('\n')
@@ -317,7 +412,8 @@ function buildGroupRequest(r: GroupInput) {
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } })
 
-const isEmail = (v: unknown): v is string => typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254
+const isEmail = (v: unknown): v is string =>
+  typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254
 const str = (v: unknown, max = 200): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
 Deno.serve(async (req: Request) => {
@@ -331,7 +427,7 @@ Deno.serve(async (req: Request) => {
   try {
     body = await req.json()
   } catch {
-    return jsonResponse({ error: 'Invalid JSON' }, 400)
+    return jsonResponse({ error: 'Ongeldige aanvraag' }, 400)
   }
 
   const type = body.type
@@ -344,26 +440,40 @@ Deno.serve(async (req: Request) => {
   const message = str(body.message, 1000) || null
   const reservationType = str(body.reservationType, 20) || 'lunch'
   const seating = str(body.seating, 10) || null
+  const cancelUrl = str(body.cancelUrl, 400)
+  const byGuest = body.byGuest === true
 
-  if (!name || !isEmail(email)) return jsonResponse({ error: 'Naam en geldig e-mailadres zijn verplicht' }, 400)
+  if (!name) return jsonResponse({ error: 'Naam is verplicht' }, 400)
 
   let mail: { subject: string; html: string; text: string }
   let to: { email: string; name: string }
   let replyTo: { email: string; name: string }
 
   if (type === 'group_request') {
+    if (!isEmail(email)) return jsonResponse({ error: 'Geldig e-mailadres is verplicht' }, 400)
     if (!date || guests < 1) return jsonResponse({ error: 'Datum en aantal personen zijn verplicht' }, 400)
-    mail = buildGroupRequest({ name, email, phone, date, guests, message, reservationType })
+    mail = buildGroupRequestMail({ name, email, phone, date, guests, message, reservationType })
     to = { email: RESTAURANT.email, name: FROM_NAME }
     replyTo = { email, name } // personeel antwoordt rechtstreeks aan de gast
-  } else if (type === 'confirmation') {
+  } else if (type === 'received' || type === 'confirmed') {
+    if (!isEmail(email)) return jsonResponse({ error: 'Geldig e-mailadres is verplicht' }, 400)
     if (!date || !time) return jsonResponse({ error: 'Datum en tijd zijn verplicht' }, 400)
-    mail = buildConfirmation({ name, date, time, guests: Math.max(1, guests), reservationType, seating, message })
+    mail = buildReservationMail(
+      { name, date, time, guests: Math.max(1, guests), reservationType, seating, message, cancelUrl },
+      type === 'confirmed',
+    )
     to = { email, name }
-    replyTo = { email: RESTAURANT.email, name: FROM_NAME } // gast antwoordt aan het restaurant
-  } else if (type === 'cancellation') {
+    replyTo = { email: RESTAURANT.email, name: FROM_NAME }
+  } else if (type === 'cancellation' && byGuest) {
+    // De gast heeft zelf geannuleerd: alleen het restaurant hoeft bericht.
     if (!date || !time) return jsonResponse({ error: 'Datum en tijd zijn verplicht' }, 400)
-    mail = buildCancellation({ name, date, time })
+    mail = buildGuestCancelledMail({ name, date, time })
+    to = { email: RESTAURANT.email, name: FROM_NAME }
+    replyTo = { email: RESTAURANT.email, name: FROM_NAME }
+  } else if (type === 'cancellation') {
+    if (!isEmail(email)) return jsonResponse({ error: 'Geldig e-mailadres is verplicht' }, 400)
+    if (!date || !time) return jsonResponse({ error: 'Datum en tijd zijn verplicht' }, 400)
+    mail = buildCancellationMail({ name, date, time })
     to = { email, name }
     replyTo = { email: RESTAURANT.email, name: FROM_NAME }
   } else {

@@ -70,12 +70,12 @@ const CookiePage = () => (
       <Section id="wat-zijn-cookies" title="1. Wat zijn cookies?">
         <p>
           Cookies zijn kleine tekstbestanden die via uw browser op uw apparaat worden opgeslagen
-          wanneer u onze website bezoekt. Ze zorgen ervoor dat de website correct functioneert en
-          stellen ons in staat inzicht te krijgen in het gebruik van de website.
+          wanneer u onze website bezoekt. Ze zorgen ervoor dat de website goed werkt en dat uw
+          voorkeuren bewaard blijven.
         </p>
         <p>
-          Naast cookies gebruiken wij ook <em>localStorage</em> – een vergelijkbare technologie in
-          uw browser – om uw cookievoorkeur op te slaan.
+          Naast cookies gebruiken wij ook <em>localStorage</em>, een vergelijkbare techniek in
+          uw browser, om uw cookievoorkeur op te slaan.
         </p>
       </Section>
 
@@ -97,40 +97,15 @@ const CookiePage = () => (
         />
       </Section>
 
-      <Section id="analytische-cookies" title="3. Analytische cookies">
+      <Section id="analytische-cookies" title="3. Analytische en tracking cookies">
         <p>
-          Met uw toestemming maken wij gebruik van Google Analytics om anoniem inzicht te krijgen
-          in websitebezoek: welke pagina's worden bezocht, hoe lang bezoekers blijven en via welk
-          kanaal ze binnenkomen. Hiermee verbeteren wij de website.
+          Wij plaatsen <strong>geen</strong> analytische cookies en gebruiken geen trackingsoftware
+          zoals Google Analytics. Wij volgen uw gedrag op deze website dus niet en bouwen geen
+          profiel van u op.
         </p>
         <p>
-          IP-adressen worden geanonimiseerd vóór verwerking. Wij hebben een verwerkersovereenkomst
-          gesloten met Google. Google mag uw gegevens niet voor eigen doeleinden gebruiken.
-        </p>
-        <CookieTable
-          rows={[
-            {
-              naam: "_ga",
-              doel: "Onderscheidt unieke gebruikers (Google Analytics)",
-              type: "Analytisch",
-              bewaartermijn: "2 jaar",
-            },
-            {
-              naam: "_ga_*",
-              doel: "Slaat sessiestatus op (Google Analytics 4)",
-              type: "Analytisch",
-              bewaartermijn: "2 jaar",
-            },
-            {
-              naam: "_gid",
-              doel: "Onderscheidt gebruikers (Google Analytics)",
-              type: "Analytisch",
-              bewaartermijn: "24 uur",
-            },
-          ]}
-        />
-        <p>
-          U kunt analytische cookies weigeren via onze cookiebanner bij uw eerste bezoek.
+          Zou dit in de toekomst veranderen, dan vragen wij daar vooraf uw toestemming voor en
+          passen wij dit cookiebeleid aan.
         </p>
       </Section>
 
@@ -143,20 +118,13 @@ const CookiePage = () => (
 
       <Section id="toestemming" title="5. Toestemming en wijzigen">
         <p>
-          Bij uw eerste bezoek vragen wij via een cookiebanner om uw toestemming. U kunt kiezen
-          voor:
+          Omdat wij alleen noodzakelijke, functionele cookies gebruiken, hoeven wij u geen
+          toestemming te vragen. Bij uw eerste bezoek tonen wij wel een korte melding, zodat u
+          weet waar u aan toe bent.
         </p>
-        <ul className="list-disc list-inside space-y-1 pl-2">
-          <li>
-            <strong>Alleen functioneel</strong> – alleen de noodzakelijke cookies worden geplaatst.
-          </li>
-          <li>
-            <strong>Alles accepteren</strong> – ook analytische cookies worden geplaatst.
-          </li>
-        </ul>
         <p>
-          U kunt uw keuze op elk moment herzien. <ResetButton /> Dan verschijnt de cookiebanner
-          opnieuw.
+          Wilt u die melding opnieuw zien? <ResetButton /> Dan verschijnt de melding bij uw
+          volgende bezoek opnieuw.
         </p>
       </Section>
 
