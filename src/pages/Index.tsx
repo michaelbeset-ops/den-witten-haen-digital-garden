@@ -85,22 +85,33 @@ const Index = () => (
 
     {/* Uit de keuken */}
     <section className="py-16 md:py-20">
-      <div className="container mx-auto px-4">
-        <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Uit onze keuken</p>
-        <h2 className="font-serif text-3xl md:text-4xl mb-8">Proef onze specialiteiten</h2>
-      </div>
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-5 px-4 md:px-[max(1rem,calc((100%-1400px)/2+1rem))] pb-4" style={{ minWidth: "max-content" }}>
+      <div className="container mx-auto px-4 max-w-5xl">
+        <div className="sm:flex sm:items-end sm:justify-between gap-6 mb-8">
+          <div>
+            <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Uit onze keuken</p>
+            <h2 className="font-serif text-3xl md:text-4xl">Proef onze specialiteiten</h2>
+          </div>
+          <Link
+            to="/menu"
+            className="hidden sm:inline-block shrink-0 text-sm text-primary font-sans underline underline-offset-4 hover:text-foreground transition-colors"
+          >
+            Bekijk het volledige menu
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
           {specialties.map((item) => (
-            <div key={item.name} className="w-60 shrink-0 border-l-2 border-primary/30 pl-4 py-1">
-              <h3 className="font-serif text-lg mb-1 leading-snug">{item.name}</h3>
+            <div key={item.name} className="border-l-2 border-primary/25 pl-4">
+              <h3 className="font-serif text-lg mb-0.5 leading-snug">{item.name}</h3>
               <p className="text-sm text-muted-foreground font-sans leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
-      </div>
-      <div className="container mx-auto px-4 mt-6">
-        <Link to="/menu" className="text-sm text-primary font-sans underline underline-offset-4 hover:text-foreground transition-colors">
+
+        <Link
+          to="/menu"
+          className="sm:hidden inline-block mt-8 text-sm text-primary font-sans underline underline-offset-4"
+        >
           Bekijk het volledige menu
         </Link>
       </div>
@@ -182,14 +193,14 @@ const Index = () => (
     </section>
 
     {/* Ervaringen van gasten */}
-    <section className="py-12 border-t border-border">
-      <div className="container mx-auto px-4">
-        <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-6">
+    <section className="py-14 md:py-16 bg-card border-t border-border">
+      <div className="container mx-auto px-4 max-w-5xl">
+        <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-8">
           Wat onze gasten zeggen
         </p>
-        <div className="flex gap-8 overflow-x-auto scrollbar-hide pb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
           {reviews.map((r, i) => (
-            <figure key={i} className="shrink-0 w-72 flex flex-col gap-2 m-0">
+            <figure key={i} className="flex flex-col gap-2 m-0">
               <div className="flex gap-0.5" aria-label={`${r.stars} van de 5 sterren`}>
                 {[...Array(5)].map((_, j) => (
                   <Star key={j} className={`w-3 h-3 ${j < r.stars ? 'fill-primary text-primary' : 'fill-muted text-muted'}`} aria-hidden="true" />
