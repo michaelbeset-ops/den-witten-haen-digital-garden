@@ -62,6 +62,52 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Als je in Safari op iOS voorbij de boven- of onderkant sleept, toont de
+     browser de achtergrond van het canvas. Met de lichte paginakleur gaf dat
+     een lelijke lichte balk boven de donkere hero en onder de donkere
+     voettekst. Het canvas krijgt daarom de donkere huiskleur; <body> houdt
+     gewoon de lichte achtergrond, dus de pagina zelf verandert niet. */
+  html {
+    background-color: hsl(var(--foreground));
+  }
+
+  body {
+    min-height: 100vh;
+  }
+}
+
+/* Hero precies zo hoog als het scherm. 100vh telt op mobiel de adresbalk mee,
+   waardoor de onderkant wegvalt; 100svh is de hoogte die daadwerkelijk
+   zichtbaar is. Oudere browsers die svh niet kennen, houden de vh-regel. */
+.hero-screen {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* Zijmarge die precies uitlijnt met "container mx-auto px-4 max-w-5xl".
+   De doorschuifbare rijen lopen zelf van rand tot rand, zodat kaarten netjes
+   in en uit beeld schuiven, maar de eerste kaart begint op dezelfde lijn als
+   de kop erboven. */
+.edge-pad {
+  padding-left: max(1rem, calc((100% - 64rem) / 2 + 1rem));
+  padding-right: max(1rem, calc((100% - 64rem) / 2 + 1rem));
+}
+
+/* Zonder deze regel trekt scroll-snap de eerste kaart tegen de linkerrand en
+   verdwijnt de marge hierboven. Met scroll-padding klikt de kaart vast op
+   dezelfde lijn als de kop. */
+.edge-scroll {
+  scroll-padding-left: max(1rem, calc((100% - 64rem) / 2 + 1rem));
+}
+
+/* Horizontaal scrollbare rijen zonder zichtbare scrollbalk. */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* iOS Safari (and other iOS browsers, which all use WebKit) render an empty

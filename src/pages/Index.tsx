@@ -29,6 +29,9 @@ const reviews = [
   { quote: "Vanmiddag een high tea afgehaald voor 5 personen waarvan 1 glutenvrij. Vers, lekker en ook de glutenvrije hapjes waren gevarieerd. Erg genoten!", name: "Y. Worms", stars: 5 },
 ];
 
+// Zijmarge die uitlijnt met de koppen erboven; zie .edge-pad in index.css.
+const EDGE = "edge-pad";
+
 const facts = [
   { title: "Monumentaal pand", desc: "In het historische centrum van Dordrecht" },
   { title: "Verborgen stadstuin", desc: "Met de oudste beuk van de stad" },
@@ -38,7 +41,7 @@ const facts = [
 const Index = () => (
   <main>
     {/* Hero */}
-    <section className="relative min-h-[88vh] flex items-center justify-center overflow-hidden">
+    <section className="hero-screen relative flex items-center justify-center overflow-hidden">
       <img
         src={heroImage}
         alt="Gedekte tafels en bloemen bij Den Witten Haen"
@@ -83,26 +86,35 @@ const Index = () => (
       </div>
     </section>
 
-    {/* Uit de keuken */}
+    {/* Uit de keuken, horizontaal doorschuifbaar */}
     <section className="py-16 md:py-20">
-      <div className="container mx-auto px-4">
-        <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Uit onze keuken</p>
-        <h2 className="font-serif text-3xl md:text-4xl mb-8">Proef onze specialiteiten</h2>
+      <div className={`${EDGE} mb-6`}>
+        <div className="flex items-baseline justify-between gap-4 mb-1">
+          <p className="text-sm text-primary font-sans uppercase tracking-wide">Uit onze keuken</p>
+          <Link
+            to="/menu"
+            className="shrink-0 text-sm text-primary font-sans underline underline-offset-4 whitespace-nowrap hover:text-foreground transition-colors"
+          >
+            Volledig menu
+          </Link>
+        </div>
+        <h2 className="font-serif text-3xl md:text-4xl">Proef onze specialiteiten</h2>
       </div>
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-5 px-4 md:px-[max(1rem,calc((100%-1400px)/2+1rem))] pb-4" style={{ minWidth: "max-content" }}>
+
+      <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory edge-scroll">
+        <div className={`flex gap-6 ${EDGE}`}>
           {specialties.map((item) => (
-            <div key={item.name} className="w-60 shrink-0 border-l-2 border-primary/30 pl-4 py-1">
-              <h3 className="font-serif text-lg mb-1 leading-snug">{item.name}</h3>
+            <div
+              key={item.name}
+              className="snap-start shrink-0 w-56 sm:w-60 border-l-2 border-primary/25 pl-4"
+            >
+              <h3 className="font-serif text-lg mb-0.5 leading-snug">{item.name}</h3>
               <p className="text-sm text-muted-foreground font-sans leading-relaxed">{item.desc}</p>
             </div>
           ))}
+          {/* Ruimte achter de laatste kaart, zodat die niet tegen de rand plakt. */}
+          <div className="shrink-0 w-1" aria-hidden="true" />
         </div>
-      </div>
-      <div className="container mx-auto px-4 mt-6">
-        <Link to="/menu" className="text-sm text-primary font-sans underline underline-offset-4 hover:text-foreground transition-colors">
-          Bekijk het volledige menu
-        </Link>
       </div>
     </section>
 
@@ -181,15 +193,15 @@ const Index = () => (
       </div>
     </section>
 
-    {/* Ervaringen van gasten */}
-    <section className="py-12 border-t border-border">
-      <div className="container mx-auto px-4">
-        <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-6">
-          Wat onze gasten zeggen
-        </p>
-        <div className="flex gap-8 overflow-x-auto scrollbar-hide pb-2">
+    {/* Ervaringen van gasten, horizontaal doorschuifbaar */}
+    <section className="py-14 md:py-16 bg-card border-t border-border">
+      <p className={`${EDGE} text-xs text-muted-foreground font-sans uppercase tracking-wide mb-8`}>
+        Wat onze gasten zeggen
+      </p>
+      <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory edge-scroll">
+        <div className={`flex gap-8 ${EDGE}`}>
           {reviews.map((r, i) => (
-            <figure key={i} className="shrink-0 w-72 flex flex-col gap-2 m-0">
+            <figure key={i} className="snap-start shrink-0 w-64 sm:w-72 flex flex-col gap-2 m-0">
               <div className="flex gap-0.5" aria-label={`${r.stars} van de 5 sterren`}>
                 {[...Array(5)].map((_, j) => (
                   <Star key={j} className={`w-3 h-3 ${j < r.stars ? 'fill-primary text-primary' : 'fill-muted text-muted'}`} aria-hidden="true" />
@@ -201,6 +213,7 @@ const Index = () => (
               <figcaption className="font-sans text-xs text-foreground font-medium">{r.name}</figcaption>
             </figure>
           ))}
+          <div className="shrink-0 w-1" aria-hidden="true" />
         </div>
       </div>
     </section>
