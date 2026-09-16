@@ -94,13 +94,10 @@ const Index = () => (
     {/* Uit de keuken, horizontaal doorschuifbaar */}
     <section className="py-16 md:py-20">
       <div className={`${EDGE} mb-6`}>
-        <div className="flex items-baseline justify-between gap-4 mb-1">
+        <div className="flex items-center justify-between gap-4 mb-1">
           <p className="text-sm text-primary font-sans uppercase tracking-wide">Uit onze keuken</p>
-          <Link
-            to="/menu"
-            className="shrink-0 text-sm text-primary font-sans underline underline-offset-4 whitespace-nowrap hover:text-foreground transition-colors"
-          >
-            Volledig menu
+          <Link to="/menu" className="shrink-0">
+            <Button variant="outline" size="sm">Bekijk menu</Button>
           </Link>
         </div>
         <h2 className="font-serif text-3xl md:text-4xl">Proef onze specialiteiten</h2>
@@ -126,18 +123,21 @@ const Index = () => (
     {/* Ons team */}
     <section className="pt-16 pb-10 md:pt-20 bg-card">
       <div className="container mx-auto px-4 max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-          <div className="rounded-xl overflow-hidden border border-border shadow-sm order-first">
+        {/* Kop boven de foto, tekst eronder. Op desktop staat de foto links
+            naast de tekst, met de kop over de volle breedte erboven. */}
+        <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
+        <h2 className="font-serif text-3xl md:text-4xl mb-6 md:mb-8">Ons Team</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 md:items-center">
+          <div className="rounded-xl overflow-hidden border border-border shadow-sm">
             <img
               src={teamImage}
               alt="Het team van Den Witten Haen"
-              className="w-full h-72 sm:h-[420px] object-cover object-bottom"
+              className="w-full h-72 sm:h-80 md:h-[420px] object-cover object-bottom"
               loading="lazy"
             />
           </div>
           <div>
-            <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
-            <h2 className="font-serif text-3xl md:text-4xl mb-4">Ons Team</h2>
             <p className="text-muted-foreground font-sans leading-relaxed mb-6">
               Bij Den Witten Haen werken mensen met een beperking met hart en ziel aan uw ervaring.
               Ons team maakt van elk bezoek iets bijzonders, met warmte, aandacht en oprechte
