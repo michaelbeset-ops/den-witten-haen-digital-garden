@@ -72,30 +72,32 @@ const Index = () => (
       </div>
     </section>
 
-    {/* Korte kenmerken */}
+    {/* Korte kenmerken. Op mobiel horizontaal doorschuifbaar, vanaf sm drie
+        kolommen naast elkaar met scheidslijnen. */}
     <section className="bg-card border-y border-border">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+      <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory edge-scroll sm:overflow-visible">
+        <div className={`flex gap-8 ${EDGE} sm:grid sm:grid-cols-3 sm:gap-0 sm:divide-x divide-border`}>
           {facts.map((f) => (
-            <div key={f.title} className="py-7 sm:py-9 sm:px-8 text-center">
+            <div
+              key={f.title}
+              className="snap-start shrink-0 w-60 py-6 text-left sm:w-auto sm:shrink sm:py-8 sm:px-8 sm:text-center"
+            >
               <h2 className="font-serif text-lg text-foreground mb-1">{f.title}</h2>
               <p className="text-sm text-muted-foreground font-sans leading-relaxed">{f.desc}</p>
             </div>
           ))}
+          <div className="shrink-0 w-1 sm:hidden" aria-hidden="true" />
         </div>
       </div>
     </section>
 
     {/* Uit de keuken, horizontaal doorschuifbaar */}
-    <section className="py-16 md:py-20">
+    <section className="pt-12 pb-8 md:pt-16 md:pb-10">
       <div className={`${EDGE} mb-6`}>
-        <div className="flex items-baseline justify-between gap-4 mb-1">
+        <div className="flex items-center justify-between gap-4 mb-1">
           <p className="text-sm text-primary font-sans uppercase tracking-wide">Uit onze keuken</p>
-          <Link
-            to="/menu"
-            className="shrink-0 text-sm text-primary font-sans underline underline-offset-4 whitespace-nowrap hover:text-foreground transition-colors"
-          >
-            Volledig menu
+          <Link to="/menu" className="shrink-0">
+            <Button variant="outline" size="sm">Bekijk menu</Button>
           </Link>
         </div>
         <h2 className="font-serif text-3xl md:text-4xl">Proef onze specialiteiten</h2>
@@ -119,20 +121,23 @@ const Index = () => (
     </section>
 
     {/* Ons team */}
-    <section className="pt-16 pb-10 md:pt-20 bg-card">
+    <section className="pt-10 pb-10 md:pt-14 bg-card">
       <div className="container mx-auto px-4 max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-          <div className="rounded-xl overflow-hidden border border-border shadow-sm order-first">
+        {/* Kop boven de foto, tekst eronder. Op desktop staat de foto links
+            naast de tekst, met de kop over de volle breedte erboven. */}
+        <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
+        <h2 className="font-serif text-3xl md:text-4xl mb-5 md:mb-6">Ons Team</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 md:items-center">
+          <div className="rounded-xl overflow-hidden border border-border shadow-sm">
             <img
               src={teamImage}
               alt="Het team van Den Witten Haen"
-              className="w-full h-72 sm:h-[420px] object-cover object-bottom"
+              className="w-full h-72 sm:h-80 md:h-[420px] object-cover object-bottom"
               loading="lazy"
             />
           </div>
           <div>
-            <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
-            <h2 className="font-serif text-3xl md:text-4xl mb-4">Ons Team</h2>
             <p className="text-muted-foreground font-sans leading-relaxed mb-6">
               Bij Den Witten Haen werken mensen met een beperking met hart en ziel aan uw ervaring.
               Ons team maakt van elk bezoek iets bijzonders, met warmte, aandacht en oprechte
@@ -147,11 +152,11 @@ const Index = () => (
     </section>
 
     {/* Over Den Witten Haen */}
-    <section id="over-ons" className="pt-10 pb-16 md:pb-20 scroll-mt-24">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
+    <section id="over-ons" className="pt-10 pb-12 md:pt-12 md:pb-14 scroll-mt-24">
+      <div className="container mx-auto px-4 max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
         <div>
           <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">Ons verhaal</p>
-          <h2 className="font-serif text-3xl md:text-4xl mb-6">Over Den Witten Haen</h2>
+          <h2 className="font-serif text-3xl md:text-4xl mb-5">Over Den Witten Haen</h2>
           <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
             <p>
               Midden in het historische centrum van Dordrecht vind je Den Witten Haen. Een
@@ -194,7 +199,7 @@ const Index = () => (
     </section>
 
     {/* Ervaringen van gasten, horizontaal doorschuifbaar */}
-    <section className="py-14 md:py-16 bg-card border-t border-border">
+    <section className="py-10 md:py-12 bg-card border-t border-border">
       <p className={`${EDGE} text-xs text-muted-foreground font-sans uppercase tracking-wide mb-8`}>
         Wat onze gasten zeggen
       </p>
