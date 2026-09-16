@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,18 @@ const Navbar = () => {
     }
   };
 
-  // Lock body scroll while the mobile menu is open. Plain `overflow: hidden`
-  // on <body> is unreliable on iOS Safari, so pin the body in place instead
-  // and restore the scroll position on close.
+  // Houdt de huidige pagina bij. Dit gebeurt bewust tijdens de render en niet
+  // in een effect: React voert het opruimen van onderstaand effect uit vóór de
+  // effecten van de nieuwe render, dus een effect zou hier te laat zijn.
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
+
+  // Zet de pagina vast zolang het mobiele menu open is. Alleen
+  // `overflow: hidden` op <body> is onbetrouwbaar in Safari op iOS, dus pinnen
+  // we de pagina vast.
   useEffect(() => {
     if (!open) return;
+    const lockedPath = location.pathname;
     const scrollY = window.scrollY;
     const { style } = document.body;
     const prev = { position: style.position, top: style.top, left: style.left, right: style.right, width: style.width };
@@ -53,14 +60,28 @@ const Navbar = () => {
     style.right = "0";
     style.width = "100%";
     return () => {
+      const html = document.documentElement;
+      const vorigeBehavior = html.style.scrollBehavior;
+      html.style.scrollBehavior = "auto";
+
       style.position = prev.position;
       style.top = prev.top;
       style.left = prev.left;
       style.right = prev.right;
       style.width = prev.width;
-      window.scrollTo(0, scrollY);
+
+      // Ga je naar een andere pagina, dan mag de oude scrollpositie niet
+      // terugkomen: je hoort bovenaan de nieuwe pagina te beginnen. Alleen bij
+      // sluiten op dezelfde pagina zetten we hem terug.
+      if (pathRef.current === lockedPath) {
+        // De pagina had zolang hij vastzat geen hoogte; even laten herberekenen
+        // zodat de oude positie weer bereikbaar is.
+        void document.body.offsetHeight;
+        window.scrollTo(0, scrollY);
+      }
+      html.style.scrollBehavior = vorigeBehavior;
     };
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sluit het mobiele menu bij navigatie (ook via browser terug/vooruit).
   useEffect(() => {
