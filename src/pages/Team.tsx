@@ -1,20 +1,33 @@
-import { Heart } from "lucide-react";
 import teamImage from "@/assets/team.jpg";
+import { EMAIL_ADDRESS } from "@/lib/reservations";
 
 const teamMembers = [
-  { name: "Het Keukenteam", role: "Onze koks", desc: "Met verse ingrediënten en veel liefde bereiden zij dagelijks de lekkerste gerechten." },
-  { name: "De Bediening", role: "Uw gastheren & gastvrouwen", desc: "Altijd met een glimlach klaar om u een fijne ervaring te bezorgen." },
-  { name: "De Begeleiders", role: "Coaches & ondersteuning", desc: "Zij zorgen ervoor dat iedereen in ons team kan groeien en het beste uit zichzelf haalt." },
+  {
+    name: "Het keukenteam",
+    role: "Onze koks",
+    desc: "Met verse ingrediënten en veel liefde bereiden zij dagelijks de lekkerste gerechten.",
+  },
+  {
+    name: "De bediening",
+    role: "Uw gastheren en gastvrouwen",
+    desc: "Altijd met een glimlach klaar om u een fijne ervaring te bezorgen.",
+  },
+  {
+    name: "De begeleiders",
+    role: "Coaches en ondersteuning",
+    desc: "Zij zorgen ervoor dat iedereen in ons team kan groeien en het beste uit zichzelf haalt.",
+  },
 ];
 
 const TeamPage = () => (
   <main className="pt-24 pb-20">
     <div className="container mx-auto px-4 max-w-5xl">
-      {/* Hero: verhaal links, foto rechts (op mobiel gestapeld) */}
+      {/* Verhaal met foto */}
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center mb-16 md:mb-20">
-        {/* Verhaal */}
         <div className="order-2 lg:order-1 text-center lg:text-left">
-          <p className="text-sm text-primary font-sans uppercase tracking-wide mb-2">De mensen achter Den Witten Haen</p>
+          <p className="text-sm text-primary font-sans uppercase tracking-wide mb-2">
+            De mensen achter Den Witten Haen
+          </p>
           <h1 className="font-serif text-4xl md:text-5xl mb-6 leading-tight">Ons Team</h1>
           <div className="space-y-4 text-muted-foreground font-sans leading-relaxed">
             <p>
@@ -39,17 +52,11 @@ const TeamPage = () => (
           </div>
         </div>
 
-        {/* Foto */}
         <div className="order-1 lg:order-2">
           <div className="relative mx-auto w-full max-w-xs sm:max-w-sm lg:max-w-none">
             <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
-              <img
-                src={teamImage}
-                alt="Het team van Den Witten Haen"
-                className="w-full h-auto"
-              />
+              <img src={teamImage} alt="Het team van Den Witten Haen" className="w-full h-auto" />
             </div>
-            {/* Decoratief accent achter de foto */}
             <div className="absolute -bottom-4 -right-4 -z-10 w-2/3 h-2/3 rounded-2xl bg-primary/10 hidden sm:block" aria-hidden="true" />
           </div>
         </div>
@@ -57,29 +64,31 @@ const TeamPage = () => (
 
       {/* Wie maken het verschil */}
       <div className="max-w-3xl mx-auto">
-        <h2 className="font-serif text-2xl md:text-3xl text-center mb-8">Wie maken het verschil?</h2>
-        <div className="space-y-6 mb-12">
+        <h2 className="font-serif text-2xl md:text-3xl mb-8">Wie maken het verschil?</h2>
+        <div className="divide-y divide-border border-y border-border mb-12">
           {teamMembers.map((member) => (
-            <div key={member.name} className="bg-card rounded-lg border border-border p-6 flex gap-4 items-start">
-              <div className="shrink-0 mt-1">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-primary" />
-                </div>
+            <div key={member.name} className="py-6 sm:flex sm:gap-8">
+              <div className="sm:w-52 shrink-0 mb-1 sm:mb-0">
+                <h3 className="font-serif text-xl leading-snug">{member.name}</h3>
+                <p className="text-xs text-primary font-sans">{member.role}</p>
               </div>
-              <div>
-                <h3 className="font-serif text-xl mb-0.5">{member.name}</h3>
-                <p className="text-xs text-primary font-sans mb-2">{member.role}</p>
-                <p className="text-sm text-muted-foreground font-sans leading-relaxed">{member.desc}</p>
-              </div>
+              <p className="text-sm text-muted-foreground font-sans leading-relaxed sm:pt-1">
+                {member.desc}
+              </p>
             </div>
           ))}
         </div>
 
-        <div className="bg-primary rounded-lg p-8 text-center">
-          <h3 className="font-serif text-xl mb-2 text-primary-foreground">Werken bij Den Witten Haen?</h3>
-          <p className="text-sm text-primary-foreground/80 font-sans">
-            Wij zijn altijd op zoek naar enthousiaste mensen. Neem contact met ons op via{' '}
-            <a href="mailto:denwittenhaen@philadelphia.nl" className="underline text-primary-foreground">denwittenhaen@philadelphia.nl</a>.
+        <div className="bg-primary rounded-lg p-6 sm:p-8 text-center">
+          <h3 className="font-serif text-xl mb-2 text-primary-foreground">
+            Werken bij Den Witten Haen?
+          </h3>
+          <p className="text-sm text-primary-foreground/80 font-sans leading-relaxed">
+            Wij zijn altijd op zoek naar enthousiaste mensen. Neem contact met ons op via{" "}
+            <a href={`mailto:${EMAIL_ADDRESS}`} className="underline text-primary-foreground break-all">
+              {EMAIL_ADDRESS}
+            </a>
+            .
           </p>
         </div>
       </div>

@@ -261,7 +261,7 @@ const MenuPage = () => (
         </div>
       ))}
 
-      {/* High Tea – uitgelicht */}
+      {/* High tea, uitgelicht */}
       <div id="hightea" className="scroll-mt-36 bg-foreground text-primary-foreground rounded-xl p-8 mb-6">
         <p className="text-xs font-sans tracking-[3px] uppercase text-primary-foreground/60 mb-1">Signature</p>
         <div className="flex justify-between items-start gap-4 mb-3">
@@ -276,7 +276,7 @@ const MenuPage = () => (
         </p>
       </div>
 
-      {/* Groepslunch – uitgelicht */}
+      {/* Groepslunch, uitgelicht */}
       <div id="lunch" className="scroll-mt-36 bg-primary/5 border border-primary/15 rounded-xl p-8 mb-10">
         <p className="text-xs font-sans tracking-[3px] uppercase text-primary mb-1">Vanaf 8 personen</p>
         <h2 className="font-serif text-2xl mb-5">Groepslunch</h2>

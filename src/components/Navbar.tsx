@@ -10,7 +10,7 @@ const leftLinks = [
 ];
 
 const rightLinks = [
-  { to: "/locaties", label: "Onze Locaties" },
+  { to: "/locaties", label: "Locatie" },
   { to: "/reserveren", label: "Reserveren" },
   { to: "/#contact", label: "Contact" },
 ];
@@ -149,7 +149,7 @@ const Navbar = () => {
 
     </nav>
 
-      {/* Mobile menu — buiten <nav> gerenderd: de backdrop-blur van de balk maakt
+      {/* Mobiel menu, buiten <nav> gerenderd: de backdrop-blur van de balk maakt
           anders een containing block, waardoor dit vaste paneel in de balk wordt
           opgesloten en niet zichtbaar is. */}
       {open && (

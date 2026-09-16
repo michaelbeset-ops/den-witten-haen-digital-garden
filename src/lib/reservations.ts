@@ -9,12 +9,12 @@ export const RESERVATION_TYPES: { value: ReservationType; label: string }[] = [
   { value: 'high_tea', label: 'High tea' },
 ]
 
-// Ma t/m vr: geopend 10:00 – 16:00 (laatste tijdslot 15:00)
+// Ma t/m vr: geopend 10:00 tot 16:00 (laatste tijdslot 15:00)
 export const SLOTS_WEEKDAY = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
   '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
 ]
-// Za: geopend 10:00 – 17:00 (laatste tijdslot 16:00)
+// Za: geopend 10:00 tot 17:00 (laatste tijdslot 16:00)
 export const SLOTS_SATURDAY = [
   '10:00', '10:30', '11:00', '11:30', '12:00',
   '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
@@ -32,8 +32,26 @@ export const MAX_GUESTS_PER_WINDOW = 48
 export const MAX_GUESTS_PER_RESERVATION = 8
 export const PHONE_NUMBER = '078 611 20 50'
 export const PHONE_HREF = 'tel:0786112050'
+export const EMAIL_ADDRESS = 'denwittenhaen@philadelphia.nl'
+export const ADDRESS_STREET = 'Groenmarkt 19-B'
+export const ADDRESS_CITY = '3311 BD Dordrecht'
+export const MAPS_URL =
+  'https://www.google.com/maps/search/?api=1&query=Den+Witten+Haen+Groenmarkt+19-B+Dordrecht'
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Een Nederlands telefoonnummer heeft minstens 10 cijfers; met landcode mag het
+// langer. Opmaaktekens (spatie, streepje, haakjes, +) laten we vrij.
+export const isPhone = (v: string): boolean => {
+  const digits = v.replace(/\D/g, '')
+  return digits.length >= 9 && digits.length <= 15 && /^[\d\s+()\-./]+$/.test(v.trim())
+}
+
+// Verder dan een half jaar vooruit reserveren heeft geen zin: de agenda van het
+// restaurant staat dan nog niet vast.
+export const MAX_MONTHS_AHEAD = 6
+// Groepsaanvragen mogen groter zijn dan wat online direct geboekt kan worden.
+export const MAX_GUESTS_INPUT = 60
 
 export type SlotCounts = Record<string, number>
 
@@ -51,6 +69,22 @@ export const tomorrowStr = (): string => {
   d.setDate(d.getDate() + 1)
   return localDateStr(d)
 }
+export const maxDateStr = (): string => {
+  const d = new Date()
+  d.setMonth(d.getMonth() + MAX_MONTHS_AHEAD)
+  return localDateStr(d)
+}
+
+// "Zaterdag 19 september 2026", met hoofdletter, zoals in de e-mails.
+export const formatDutchDate = (dateStr: string): string => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+  const s = new Date(dateStr + 'T12:00:00').toLocaleDateString('nl-NL', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+export const guestsLabel = (n: number): string => `${n} ${n === 1 ? 'persoon' : 'personen'}`
 
 const toMin = (t: string): number => {
   const [h, m] = t.split(':').map(Number)
@@ -127,5 +161,22 @@ export function reservationErrorMessage(err: { code?: string; message?: string }
   if (err?.code === 'P0002') {
     return 'Dit tijdslot is helaas gesloten. Kies een andere datum of tijd.'
   }
-  return `Uw reservering kon niet worden opgeslagen. Probeer het later opnieuw of bel ons op ${PHONE_NUMBER}.`
+  if (err?.code === 'P0003') {
+    return 'De ingevulde gegevens zijn niet geldig. Controleer de datum, tijd en het aantal personen.'
+  }
+  return `Uw reservering kon niet worden opgeslagen. Probeer het opnieuw of bel ons op ${PHONE_NUMBER}.`
+}
+
+// Vertaalt een fout van cancel_reservation naar een nette melding.
+export function cancelErrorMessage(err: { code?: string; message?: string } | null): string {
+  if (err?.code === 'P0004') {
+    return 'Wij konden deze reservering niet vinden. Controleer de link uit uw e-mail.'
+  }
+  if (err?.code === 'P0005') {
+    return 'Deze reservering is al geannuleerd.'
+  }
+  if (err?.code === 'P0006') {
+    return 'Deze reservering ligt in het verleden en kan niet meer worden geannuleerd.'
+  }
+  return `Annuleren is niet gelukt. Probeer het opnieuw of bel ons op ${PHONE_NUMBER}.`
 }

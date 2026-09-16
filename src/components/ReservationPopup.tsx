@@ -1,68 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { CalendarDays, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { supabase } from '@/lib/supabase'
-import { sendConfirmationEmail, sendGroupRequestEmail } from '@/lib/email'
-import {
-  type ReservationType,
-  type Availability,
-  RESERVATION_TYPES,
-  MAX_GUESTS_PER_RESERVATION,
-  PHONE_NUMBER,
-  PHONE_HREF,
-  EMAIL_RE,
-  getSlotsForDate,
-  fetchAvailability,
-  isSlotUnavailable,
-  tomorrowStr,
-  reservationErrorMessage,
-} from '@/lib/reservations'
+import ReservationForm from '@/components/ReservationForm'
 
-const EMPTY_AVAILABILITY: Availability = { counts: {}, blockedTimes: new Set(), dayBlocked: false }
-
+/**
+ * Zwevende reserveerknop met een paneel. Het paneel toont exact hetzelfde
+ * formulier als de pagina /reserveren.
+ */
 const ReservationPopup = () => {
   const location = useLocation()
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
-  const [guests, setGuests] = useState('')
-  const [message, setMessage] = useState('')
-  const [reservationType, setReservationType] = useState<ReservationType>('lunch')
-  const [availability, setAvailability] = useState<Availability>(EMPTY_AVAILABILITY)
-  const [loadingSlots, setLoadingSlots] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [successType, setSuccessType] = useState<'reservation' | 'group'>('reservation')
-  const [error, setError] = useState('')
 
-  const guestsNum = parseInt(guests, 10)
-  const isGroup = !isNaN(guestsNum) && guestsNum > MAX_GUESTS_PER_RESERVATION
-
-  // Close on Escape
+  // Sluiten met Escape.
   useEffect(() => {
+    if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [open])
 
-  // Lock body scroll when open. Plain `overflow: hidden` on <body> is
-  // unreliable on iOS Safari (the page behind the modal still scrolls /
-  // fights the modal's own touch scrolling), so we pin the body in place
-  // instead and restore the scroll position on close.
+  // Sluiten zodra er genavigeerd wordt.
+  useEffect(() => { setOpen(false) }, [location.pathname])
+
+  // Achtergrond vastzetten zolang het paneel open is. Alleen `overflow: hidden`
+  // op <body> is onbetrouwbaar in Safari op iOS, dus pinnen we de pagina vast
+  // en zetten we de scrollpositie bij het sluiten terug.
   useEffect(() => {
     if (!open) return
     const scrollY = window.scrollY
@@ -83,106 +45,13 @@ const ReservationPopup = () => {
     }
   }, [open])
 
-  // Slot availability + sluitingen (zelfde regels als de reserveringspagina)
-  useEffect(() => {
-    if (!date) { setAvailability(EMPTY_AVAILABILITY); return }
-    let cancelled = false
-    setLoadingSlots(true)
-    fetchAvailability(date).then((a) => {
-      if (cancelled) return
-      setLoadingSlots(false)
-      setAvailability(a)
-      if (time && isSlotUnavailable(a, time)) setTime('')
-    })
-    return () => { cancelled = true }
-  }, [date]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const reset = () => {
-    setName(''); setEmail(''); setPhone(''); setDate('')
-    setTime(''); setGuests(''); setMessage(''); setReservationType('lunch')
-    setAvailability(EMPTY_AVAILABILITY); setError(''); setSuccess(false)
-  }
-
-  const handleClose = () => { setOpen(false); reset() }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    if (!name.trim() || !email.trim() || !phone.trim() || !date || !guests) {
-      setError('Vul alle verplichte velden in.')
-      return
-    }
-    if (!EMAIL_RE.test(email.trim())) {
-      setError('Voer een geldig e-mailadres in.')
-      return
-    }
-    if (isNaN(guestsNum) || guestsNum < 1) {
-      setError('Voer een geldig aantal personen in.')
-      return
-    }
-    if (availability.dayBlocked) {
-      setError('Op deze dag zijn wij gesloten. Kies een andere datum.')
-      return
-    }
-
-    // Groepen > 8 personen: aanvraag naar het restaurant mailen i.p.v. direct boeken.
-    if (isGroup) {
-      setSubmitting(true)
-      await sendGroupRequestEmail({
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        date,
-        guests: guestsNum,
-        message: message.trim() || undefined,
-        reservationType,
-      })
-      setSubmitting(false)
-      setSuccessType('group')
-      setSuccess(true)
-      return
-    }
-
-    if (!time) {
-      setError('Kies een tijdslot.')
-      return
-    }
-    if (isSlotUnavailable(availability, time)) {
-      setError('Dit tijdslot is niet meer beschikbaar. Kies een ander tijdslot.')
-      setTime('')
-      return
-    }
-    setSubmitting(true)
-    const { data: newId, error: rpcError } = await supabase.rpc('create_reservation', {
-      p_name: name.trim(),
-      p_email: email.trim(),
-      p_phone: phone.trim(),
-      p_date: date,
-      p_time: time,
-      p_guests: guestsNum,
-      p_message: message.trim() || null,
-      p_seating: null,
-      p_type: reservationType,
-    })
-    setSubmitting(false)
-    if (rpcError || !newId) {
-      setError(reservationErrorMessage(rpcError))
-      if (rpcError?.code === 'P0001' || rpcError?.code === 'P0002') setTime('')
-      return
-    }
-    sendConfirmationEmail({ name: name.trim(), email: email.trim(), date, time, guests: guestsNum, reservationType })
-    setSuccessType('reservation')
-    setSuccess(true)
-  }
-
-  if (location.pathname.replace(/\/+$/, '').endsWith('/reserveren')) {
-    return null
-  }
+  // Op de reserveringspagina zelf heeft de knop geen functie.
+  if (location.pathname.replace(/\/+$/, '').endsWith('/reserveren')) return null
 
   return (
     <>
-      {/* Floating button */}
+      {/* Zwevende knop: alleen op desktop. Op mobiel staat er al een
+          reserveerknop in de balk bovenaan. */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Reservering maken"
@@ -192,16 +61,14 @@ const ReservationPopup = () => {
         Reserveren
       </button>
 
-      {/* Backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-50 bg-foreground/50 backdrop-blur-sm"
-          onClick={handleClose}
+          onClick={() => setOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Panel */}
       {open && (
         <div
           role="dialog"
@@ -209,14 +76,13 @@ const ReservationPopup = () => {
           aria-label="Reservering maken"
           className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 w-full sm:w-[420px] h-full sm:h-auto sm:max-h-[90vh] bg-card border-0 sm:border border-border rounded-none sm:rounded-2xl shadow-2xl flex flex-col"
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
             <div>
               <h2 className="font-serif text-xl text-foreground">Reserveren</h2>
               <p className="font-sans text-xs text-muted-foreground mt-0.5">Den Witten Haen, Dordrecht</p>
             </div>
             <button
-              onClick={handleClose}
+              onClick={() => setOpen(false)}
               aria-label="Sluiten"
               className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
@@ -224,153 +90,8 @@ const ReservationPopup = () => {
             </button>
           </div>
 
-          {/* Content */}
           <div className="overflow-y-auto flex-1 px-6 py-5">
-            {success ? (
-              <div className="text-center py-8">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <CalendarDays className="text-primary" size={24} />
-                </div>
-                <h3 className="font-serif text-lg mb-2">Bedankt!</h3>
-                <p className="text-sm text-muted-foreground font-sans leading-relaxed">
-                  {successType === 'group'
-                    ? 'Uw aanvraag is ontvangen. Wij nemen zo snel mogelijk contact met u op om de details door te nemen.'
-                    : 'Uw reservering is ontvangen. U ontvangt een bevestiging per e-mail.'}
-                </p>
-                <Button className="mt-6 w-full" variant="outline" onClick={handleClose}>
-                  Sluiten
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                {error && (
-                  <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs font-sans">
-                    {error}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label htmlFor="pop-name">Naam *</Label>
-                    <Input id="pop-name" value={name} onChange={e => setName(e.target.value)} placeholder="Uw naam" />
-                  </div>
-                  <div>
-                    <Label htmlFor="pop-email">E-mailadres *</Label>
-                    <Input id="pop-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="naam@voorbeeld.nl" />
-                  </div>
-                  <div>
-                    <Label htmlFor="pop-phone">Telefoonnummer *</Label>
-                    <Input id="pop-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="06 – 00 00 00 00" />
-                  </div>
-                  <div>
-                    <Label>Wat wilt u reserveren? *</Label>
-                    <div className="flex gap-6 mt-2">
-                      {RESERVATION_TYPES.map(opt => (
-                        <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="pop-type"
-                            value={opt.value}
-                            checked={reservationType === opt.value}
-                            onChange={() => setReservationType(opt.value)}
-                            className="accent-primary"
-                          />
-                          <span className="text-sm font-sans text-foreground">{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {reservationType === 'high_tea' && (
-                      <div className="mt-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs font-sans leading-relaxed">
-                        <strong>Annuleren high tea:</strong> tot uiterlijk 48 uur van tevoren. Daarna
-                        wordt de betaling alsnog in rekening gebracht.
-                      </div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="pop-date">Datum *</Label>
-                      <div className="relative">
-                        <Input
-                          id="pop-date"
-                          type="date"
-                          value={date}
-                          min={tomorrowStr()}
-                          onChange={e => { setDate(e.target.value); setTime('') }}
-                        />
-                        {!date && (
-                          <span className="date-placeholder-ios pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">
-                            dd-mm-jjjj
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="pop-guests">Personen *</Label>
-                      <Input
-                        id="pop-guests"
-                        type="number"
-                        value={guests}
-                        onChange={e => setGuests(e.target.value)}
-                        min={1} max={20}
-                        placeholder="Aantal"
-                      />
-                    </div>
-                  </div>
-                  {isGroup && (
-                    <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-foreground text-xs font-sans leading-relaxed">
-                      Voor groepen van meer dan {MAX_GUESTS_PER_RESERVATION} personen plannen wij de
-                      reservering persoonlijk in. Verstuur uw aanvraag, dan nemen wij contact met u op.
-                      Liever bellen? <a href={PHONE_HREF} className="underline">{PHONE_NUMBER}</a>.
-                    </div>
-                  )}
-                  {!isGroup && (
-                  <div>
-                    <Label htmlFor="pop-time">Tijdslot *</Label>
-                    <Select value={time} onValueChange={setTime} disabled={!date || loadingSlots}>
-                      <SelectTrigger id="pop-time">
-                        <SelectValue placeholder={loadingSlots ? 'Laden...' : !date ? 'Kies eerst een datum' : 'Kies een tijdslot'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availability.dayBlocked ? (
-                          <SelectItem value="__dayblocked__" disabled>Op deze dag zijn wij gesloten</SelectItem>
-                        ) : getSlotsForDate(date).length === 0 ? (
-                          <SelectItem value="__closed__" disabled>Zondag gesloten</SelectItem>
-                        ) : getSlotsForDate(date).map(slot => {
-                          const blocked = availability.blockedTimes.has(slot)
-                          const full = !blocked && isSlotUnavailable(availability, slot)
-                          return (
-                            <SelectItem key={slot} value={slot} disabled={blocked || full}>
-                              {slot}{blocked ? ' (Gesloten)' : full ? ' (Volgeboekt)' : ''}
-                            </SelectItem>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                    {date && availability.dayBlocked && (
-                      <p className="mt-1 text-xs text-destructive font-sans">Op deze dag zijn wij gesloten.</p>
-                    )}
-                    {date && !availability.dayBlocked && getSlotsForDate(date).length === 0 && (
-                      <p className="mt-1 text-xs text-destructive font-sans">Op zondag zijn wij gesloten.</p>
-                    )}
-                  </div>
-                  )}
-                  <div>
-                    <Label htmlFor="pop-message">Opmerking</Label>
-                    <Textarea
-                      id="pop-message"
-                      value={message}
-                      onChange={e => setMessage(e.target.value)}
-                      placeholder="Dieetwensen, gelegenheid..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? 'Versturen...' : isGroup ? 'Groepsaanvraag versturen' : 'Reservering versturen'}
-                </Button>
-              </form>
-            )}
+            <ReservationForm variant="popup" onClose={() => setOpen(false)} />
           </div>
         </div>
       )}
