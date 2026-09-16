@@ -125,24 +125,42 @@ const Index = () => (
       <div className="container mx-auto px-4 max-w-5xl">
         {/* Kop boven de foto, tekst eronder. Op desktop staat de foto links
             naast de tekst, met de kop over de volle breedte erboven. */}
-        <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">De mensen achter</p>
+        <p className="text-sm text-primary font-sans uppercase tracking-wide mb-1">
+          De mensen achter Den Witten Haen
+        </p>
         <h2 className="font-serif text-3xl md:text-4xl mb-5 md:mb-6">Ons Team</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 md:items-center">
-          <div className="rounded-xl overflow-hidden border border-border shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+          <div className="rounded-xl overflow-hidden border border-border shadow-sm md:h-full">
             <img
               src={teamImage}
               alt="Het team van Den Witten Haen"
-              className="w-full h-72 sm:h-80 md:h-[420px] object-cover object-bottom"
+              className="w-full h-72 sm:h-80 md:h-full md:min-h-[420px] object-cover object-bottom"
               loading="lazy"
             />
           </div>
           <div>
-            <p className="text-muted-foreground font-sans leading-relaxed mb-6">
-              Bij Den Witten Haen werken mensen met een beperking met hart en ziel aan uw ervaring.
-              Ons team maakt van elk bezoek iets bijzonders, met warmte, aandacht en oprechte
-              gastvrijheid.
-            </p>
+            <div className="space-y-4 text-muted-foreground font-sans leading-relaxed mb-6">
+              <p>
+                Een plek met karakter wordt gemaakt door de mensen die er werken. Bij Den Witten
+                Haen begint dat bij ons team.
+              </p>
+              <p>
+                Iedereen brengt zijn eigen talent, persoonlijkheid en verhaal mee. De één voelt
+                zich thuis in de keuken, de ander geniet van het contact met onze gasten. Samen
+                zorgen we voor iets bijzonders: niet alleen een lekkere lunch of goede koffie,
+                maar vooral een warm welkom.
+              </p>
+              <p>
+                We geven elkaar de ruimte om te ontdekken, te leren en te groeien. Door samen te
+                werken en elkaar te versterken, ontstaat de bijzondere sfeer die u bij Den Witten
+                Haen voelt.
+              </p>
+              <p className="text-foreground font-medium">
+                Want de sfeer van Den Witten Haen zit niet alleen in de plek. Die zit vooral in
+                de mensen.
+              </p>
+            </div>
             <Link to="/team">
               <Button variant="outline">Ontmoet ons team</Button>
             </Link>
@@ -168,11 +186,11 @@ const Index = () => (
               verborgen stadstuin, omringd door groen en rust, met als bijzonder middelpunt de
               oudste beuk van Dordrecht. Een plek waar je kunt genieten en je welkom bent.
             </p>
-            <p className="hidden md:block">
+            <p>
               Wij geloven dat gastvrijheid meer is dan een goede kop koffie of een lekkere
               lunch. Het zit in de kleine dingen.
             </p>
-            <p className="hidden md:block">
+            <p>
               Den Witten Haen is onderdeel van Philadelphia. Vanuit die gedachte bouwen we
               samen aan een plek waar iedereen kan meedoen, zich kan ontwikkelen en van
               betekenis is.
