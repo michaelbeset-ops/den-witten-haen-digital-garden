@@ -85,6 +85,19 @@
   min-height: 100svh;
 }
 
+/* Uitsnede van de herofoto. De foto staat rechtop, dus op een breed scherm
+   valt er veel weg. Op mobiel schuiven we naar rechts en op desktop iets
+   omhoog, zodat de gedekte tafels en de zaal in beeld komen in plaats van
+   alleen de bloemen op de voorgrond. */
+.hero-crop {
+  object-position: 72% 50%;
+}
+@media (min-width: 768px) {
+  .hero-crop {
+    object-position: 50% 35%;
+  }
+}
+
 /* Zijmarge die precies uitlijnt met "container mx-auto px-4 max-w-5xl".
    De doorschuifbare rijen lopen zelf van rand tot rand, zodat kaarten netjes
    in en uit beeld schuiven, maar de eerste kaart begint op dezelfde lijn als

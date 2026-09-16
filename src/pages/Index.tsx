@@ -45,7 +45,7 @@ const Index = () => (
       <img
         src={heroImage}
         alt="Gedekte tafels en bloemen bij Den Witten Haen"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="hero-crop absolute inset-0 w-full h-full object-cover"
         width={1200}
         height={1600}
         fetchPriority="high"
