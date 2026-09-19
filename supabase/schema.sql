@@ -1,7 +1,9 @@
 -- Den Witten Haen: reservations schema
 -- Run this in the Supabase SQL editor to set up the database schema from scratch.
 -- For an existing database, run the files in supabase/migrations/ in order instead.
--- This file reflects the state after migration 004.
+-- This file reflects the state after migrations 004 and 006.
+-- Let op: migratie 005 (annuleren door de gast) staat hier NIET in; draai die
+-- apart uit supabase/migrations/.
 
 create table if not exists reservations (
   id uuid default gen_random_uuid() primary key,
@@ -21,9 +23,11 @@ create table if not exists reservations (
 -- Row Level Security
 alter table reservations enable row level security;
 
--- Anonymous users may insert (public reservation form)
-create policy "anon_insert" on reservations
-  for insert to anon with check (true);
+-- Anonieme bezoekers mogen NIET rechtstreeks in de tabel schrijven: het
+-- reserveringsformulier gaat via create_reservation() hieronder, dat met
+-- security definer draait en capaciteit en sluitingsdagen controleert.
+-- (Zie migratie 006; een directe insert-policy omzeilt al die controles.)
+revoke insert on table reservations from anon;
 
 -- Authenticated users (staff) may read all reservations
 create policy "auth_select" on reservations

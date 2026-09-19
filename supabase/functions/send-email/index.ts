@@ -58,10 +58,30 @@ const escape = (v: unknown): string =>
 const nl2br = (v: string): string => escape(v).replace(/\r?\n/g, '<br>')
 
 // Alleen links naar onze eigen site toestaan, zodat een meegestuurde URL nooit
-// een vreemde bestemming in de mail kan zetten.
+// een vreemde bestemming in de mail kan zetten. De functie is publiek
+// aanroepbaar, dus een losse "is het een URL"-check is niet genoeg: dan kan
+// iemand een mail vanaf ons eigen domein naar zijn eigen site laten wijzen.
+const ALLOWED_CANCEL_HOSTS = new Set([
+  'denwittenhaen.com',
+  'www.denwittenhaen.com',
+  'michaelbeset-ops.github.io', // GitHub Pages-adres, voordat het domein ervoor zit
+  'localhost',
+  '127.0.0.1',
+])
+
 const safeUrl = (v: unknown): string => {
   const s = String(v ?? '')
-  return /^https?:\/\/[^\s"'<>]+$/.test(s) ? s : ''
+  let u: URL
+  try {
+    u = new URL(s)
+  } catch {
+    return ''
+  }
+  if (u.protocol !== 'https:' && !(u.protocol === 'http:' && u.hostname === 'localhost')) return ''
+  if (!ALLOWED_CANCEL_HOSTS.has(u.hostname)) return ''
+  // De link hoort naar de annuleerpagina te wijzen, niet naar een willekeurig pad.
+  if (!u.pathname.replace(/\/+$/, '').endsWith('/annuleren')) return ''
+  return u.toString()
 }
 
 function formatDutchDate(dateStr: string): string {
