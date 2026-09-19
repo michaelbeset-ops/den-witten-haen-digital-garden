@@ -164,6 +164,11 @@ export function reservationErrorMessage(err: { code?: string; message?: string }
   if (err?.code === 'P0003') {
     return 'De ingevulde gegevens zijn niet geldig. Controleer de datum, tijd en het aantal personen.'
   }
+  if (err?.code === 'P0007') {
+    // Rem tegen geautomatiseerde boekingen (migratie 008). De database geeft
+    // hier zelf een bruikbare tekst mee.
+    return err.message ?? `Er zijn net al meerdere reserveringen gemaakt. Probeer het later opnieuw of bel ons op ${PHONE_NUMBER}.`
+  }
   return `Uw reservering kon niet worden opgeslagen. Probeer het opnieuw of bel ons op ${PHONE_NUMBER}.`
 }
 

@@ -27,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Back-ups met persoonsgegevens horen niet in git
+backups/

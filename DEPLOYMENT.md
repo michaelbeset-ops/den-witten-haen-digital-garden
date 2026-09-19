@@ -1,3 +1,6 @@
+> **Beveiliging:** zie `SECURITY.md` voor de migraties, de deploy van de Edge
+> Functions en de stappen rond e-mail (SPF/DKIM/DMARC) die nog openstaan.
+>
 > **Let op (status september 2026):** op dit moment wordt de site live gezet via
 > **GitHub Pages** (`.github/workflows/deploy.yml`, domein `denwittenhaen.com` via
 > `public/CNAME`). De Vimexx-FTP-workflow hieronder is beschreven, maar het bestand

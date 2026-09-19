@@ -1,10 +1,24 @@
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+// Alleen onze eigen site mag deze functie vanuit de browser aanroepen.
+const ALLOWED_ORIGINS = [
+  'https://denwittenhaen.com',
+  'https://www.denwittenhaen.com',
+  'https://michaelbeset-ops.github.io',
+  'http://localhost:5173',
+  'http://localhost:4173',
+]
+
+const corsFor = (req: Request) => {
+  const origin = req.headers.get('Origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 Deno.serve(async (req: Request) => {
+  const CORS = corsFor(req)
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
 
   const json = (data: unknown, status = 200) =>
@@ -30,6 +44,19 @@ Deno.serve(async (req: Request) => {
   if (!userRes.ok) return json({ error: 'Niet geautoriseerd' }, 401)
   const caller = await userRes.json()
   if (!caller?.id) return json({ error: 'Niet geautoriseerd' }, 401)
+
+  // Ingelogd zijn is niet genoeg: alleen wie in de tabel admins staat mag hier
+  // iets doen. Zonder deze check kon elk medewerkersaccount met de
+  // service-role-sleutel beheeraccounts aanmaken en verwijderen.
+  const adminRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/admins?select=user_id&user_id=eq.${encodeURIComponent(caller.id)}`,
+    { headers: { 'Authorization': `Bearer ${SERVICE_KEY}`, 'apikey': SERVICE_KEY } },
+  )
+  const adminRows = adminRes.ok ? await adminRes.json().catch(() => []) : []
+  if (!Array.isArray(adminRows) || adminRows.length === 0) {
+    console.log('[manage-users] geen beheerder:', caller.id)
+    return json({ error: 'Geen beheerrechten' }, 403)
+  }
 
   const body = await req.json()
   const { action } = body

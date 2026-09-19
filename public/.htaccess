@@ -1,3 +1,8 @@
+# LET OP: dit bestand doet NIETS op GitHub Pages — daar is geen Apache en wordt
+# .htaccess genegeerd. De SPA-routing wordt daar door public/404.html opgevangen.
+# Deze regels gelden alleen als de site op Apache-hosting draait (bv. Vimexx).
+# Zie DEPLOYMENT.md.
+
 # SPA routing: serve index.html for any path that isn't a real file/directory
 <IfModule mod_rewrite.c>
   RewriteEngine On
@@ -27,4 +32,14 @@
   ExpiresByType image/svg+xml "access plus 1 year"
   ExpiresByType image/x-icon "access plus 1 year"
   ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# Security headers (alleen op Apache; op GitHub Pages niet te zetten)
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), camera=(), microphone=(), interest-cohort=()"
+  # HSTS pas aanzetten als https op alle (sub)domeinen zeker werkt.
+  # Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
