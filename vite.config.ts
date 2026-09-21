@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { createHash } from "crypto";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { resolve } from "path";
 
 // Content-Security-Policy als meta-tag.
 //
@@ -15,16 +17,12 @@ import { createHash } from "crypto";
 // schema.org-blok) krijgen een sha256-hash, zodat we geen 'unsafe-inline' voor
 // scripts nodig hebben. De hashes worden hier berekend, zodat ze niet kunnen
 // verlopen als index.html verandert.
-function cspPlugin() {
-  return {
-    name: "csp-meta",
-    enforce: "post" as const,
-    transformIndexHtml(html: string) {
-      const hashes: string[] = [];
-      for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
-        hashes.push(`'sha256-${createHash("sha256").update(m[1], "utf8").digest("base64")}'`);
-      }
-      const csp = [
+function bouwCsp(html: string): string {
+  const hashes: string[] = [];
+  for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
+    hashes.push(`'sha256-${createHash("sha256").update(m[1], "utf8").digest("base64")}'`);
+  }
+  return [
         "default-src 'self'",
         `script-src 'self' ${hashes.join(" ")}`.trim(),
         // React en Tailwind zetten stijlen inline; daar is geen hash voor te geven.
@@ -37,11 +35,31 @@ function cspPlugin() {
         "base-uri 'self'",
         "object-src 'none'",
         "frame-src 'none'",
-      ].join("; ");
-      return html.replace(
-        /<head>/i,
-        `<head>\n    <meta http-equiv="Content-Security-Policy" content="${csp}" />`,
-      );
+  ].join("; ");
+}
+
+function metCsp(html: string): string {
+  if (html.includes("Content-Security-Policy")) return html;
+  return html.replace(
+    /<head>/i,
+    `<head>\n    <meta http-equiv="Content-Security-Policy" content="${bouwCsp(html)}" />`,
+  );
+}
+
+function cspPlugin() {
+  return {
+    name: "csp-meta",
+    enforce: "post" as const,
+    transformIndexHtml(html: string) {
+      return metCsp(html);
+    },
+    // 404.html komt uit public/ en gaat niet door transformIndexHtml heen,
+    // terwijl GitHub Pages die pagina juist voor elke diepe link serveert.
+    // Daarom hier, na de build, met een hash over het eigen inline script.
+    closeBundle() {
+      const bestand = resolve(__dirname, "dist/404.html");
+      if (!existsSync(bestand)) return;
+      writeFileSync(bestand, metCsp(readFileSync(bestand, "utf-8")), "utf-8");
     },
   };
 }

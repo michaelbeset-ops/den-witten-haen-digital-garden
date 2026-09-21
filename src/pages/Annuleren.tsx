@@ -96,7 +96,7 @@ const AnnulerenPage = () => {
     if (row) {
       // Het restaurant op de hoogte brengen. Lukt dat niet, dan is de
       // reservering nog steeds geannuleerd in de agenda.
-      sendCancellationEmail({ name: row.name, email: '', date: row.date, time: row.time, byGuest: true })
+      sendCancellationEmail({ reservationId: id, byGuest: true })
     }
     setDone(true)
   }

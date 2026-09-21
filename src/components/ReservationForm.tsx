@@ -227,14 +227,7 @@ const ReservationForm = ({ variant = 'page', onClose }: Props) => {
     // De reservering staat nu vast. De e-mail is prettig maar niet kritiek:
     // lukt hij niet, dan melden we dat op het scherm.
     const sent = await sendReceivedEmail({
-      name: name.trim(),
-      email: email.trim(),
-      date,
-      time,
-      guests: guestsNum,
-      reservationType,
-      seating: seating === 'geen' ? null : seating,
-      message: message.trim() || null,
+      reservationId: newId as string,
       cancelUrl: cancelUrl(newId as string),
     })
 

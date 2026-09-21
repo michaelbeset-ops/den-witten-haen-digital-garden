@@ -299,7 +299,7 @@ const Dashboard = () => {
       return
     }
     setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'geannuleerd' } : item))
-    const sent = await sendCancellationEmail({ name: r.name, email: r.email, date: r.date, time: r.time })
+    const sent = await sendCancellationEmail({ reservationId: r.id })
     if (!sent) setActionError(`De reservering is geannuleerd, maar de e-mail aan ${r.name} kon niet worden verstuurd. Neem zelf even contact op.`)
   }
 
@@ -314,14 +314,7 @@ const Dashboard = () => {
     }
     setReservations(prev => prev.map(item => item.id === r.id ? { ...item, status: 'bevestigd' } : item))
     const sent = await sendConfirmedEmail({
-      name: r.name,
-      email: r.email,
-      date: r.date,
-      time: r.time,
-      guests: r.guests,
-      reservationType: r.reservation_type ?? 'lunch',
-      seating: r.seating_preference ?? null,
-      message: r.message ?? null,
+      reservationId: r.id,
       cancelUrl: cancelUrl(r.id),
     })
     if (!sent) setActionError(`De reservering is bevestigd, maar de e-mail aan ${r.name} kon niet worden verstuurd. Neem zelf even contact op.`)

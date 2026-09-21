@@ -18,6 +18,7 @@ Op volgorde, en controleer na elke stap of reserveren nog werkt:
 | `006_remove_anon_insert.sql` | Anonieme bezoekers kunnen niet meer langs de controles heen boeken |
 | `007_admins.sql` | Beheerdersrol voor `manage-users` |
 | `008_rate_limit.sql` | Rem op geautomatiseerde boekingen |
+| `009_update_scope_en_bewaartermijn.sql` | Personeel mag alleen nog `status` wijzigen; bewaartermijn toegevoegd |
 
 Na `007` moet je jezelf eenmalig als beheerder aanzetten, anders werkt
 gebruikersbeheer voor niemand meer:
@@ -29,15 +30,23 @@ select id from auth.users where email = 'jouw@adres.nl';
 
 Dat de tabel leeg begint is bewust: dicht is de veilige startstand.
 
-## 2. Deploy de Edge Functions
+## 2. Deploy in deze volgorde: eerst de site, dan de Edge Functions
+
+**De volgorde is belangrijk.** `send-email` haalt de gegevens van de gast
+voortaan uit de database en verwacht een `reservationId` in het verzoek. De
+nieuwe site stuurt dat mee, de oude niet.
+
+1. Eerst de site: merge naar `main` (de GitHub Action deployt naar Pages).
+   De oude Edge Function negeert `reservationId` en blijft gewoon werken.
+2. Daarna de functies:
 
 ```bash
 supabase functions deploy send-email
 supabase functions deploy manage-users
 ```
 
-De codewijzigingen (annuleerlink alleen naar eigen domein, beheerderscheck)
-werken pas ná deze stap. Een push naar `main` deployt alleen de website.
+Andersom (eerst de functie) stoppen de bevestigingsmails totdat de site live
+staat. Test na stap 2 een proefreservering en controleer of de mail aankomt.
 
 ## 3. Zet self-signup uit (Supabase → Authentication → Providers → Email)
 
@@ -90,7 +99,9 @@ van gasten en die horen niet als build-artifact in GitHub te staan.
 
 GitHub Pages laat geen eigen HTTP-headers toe. Daarom:
 
-- **CSP** staat als `<meta>`-tag in de pagina (zie `vite.config.ts`). Dat werkt.
+- **CSP** staat als `<meta>`-tag in de pagina (zie `vite.config.ts`), zowel in
+  `index.html` als in `404.html`. Geverifieerd in Chromium: alle pagina's
+  renderen en de SPA-redirect van GitHub Pages blijft werken.
 - **X-Frame-Options / frame-ancestors** kan niet via een meta-tag. De site is
   dus niet beschermd tegen inbedding in een frame op een andere site. Voor een
   lunchroomsite met een losse beheerlogin is dat een klein risico; wil je het
@@ -98,12 +109,23 @@ GitHub Pages laat geen eigen HTTP-headers toe. Daarom:
 - `public/.htaccess` doet op GitHub Pages **niets**. Dat bestand is alleen
   relevant als de site ooit op Apache-hosting (Vimexx) draait.
 
+## Bewaartermijn gebruiken (migratie 009)
+
+Migratie 009 voegt een functie toe, maar ruimt niets automatisch op. Kijk eerst
+wat er weg zou gaan, maak een back-up, en draai hem dan:
+
+```sql
+select count(*) from reservations where date < current_date - interval '24 months';
+select purge_old_reservations(24);
+```
+
 ## Openstaand
 
-- De policy `auth_update` laat ingelogd personeel elk veld van elke reservering
-  wijzigen. Beperkt risico (personeel is vertrouwd), maar netter zou zijn om
-  alleen `status` te laten wijzigen.
-- Er is geen bewaartermijn voor reserveringen: oude persoonsgegevens blijven
-  staan. Overweeg reserveringen ouder dan bijvoorbeeld een jaar automatisch te
-  verwijderen (AVG: niet langer bewaren dan nodig).
+- **Clickjacking.** `frame-ancestors` / `X-Frame-Options` kan niet via een
+  meta-tag en GitHub Pages laat geen headers toe. Klein risico voor deze site;
+  alleen op te lossen door Cloudflare ervoor te zetten.
+- **`manage-users` bestaat nog** terwijl de site de functie nergens gebruikt.
+  Hij is nu afgeschermd met de admins-tabel, maar het schoonste is hem
+  weghalen: `supabase functions delete manage-users` en het bestand
+  verwijderen.
 - Gebruik SFTP, niet FTP, als je ooit naar Vimexx deployt (zie `DEPLOYMENT.md`).

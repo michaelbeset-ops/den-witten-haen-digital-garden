@@ -12,10 +12,24 @@
 //   cancellation    naar de gast (personeel annuleert) of naar het restaurant (gast annuleert zelf)
 //   group_request   naar het restaurant, aanvraag voor meer dan 8 personen
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+// Alleen onze eigen site mag deze functie vanuit de browser aanroepen.
+const ALLOWED_ORIGINS = [
+  'https://denwittenhaen.com',
+  'https://www.denwittenhaen.com',
+  'https://michaelbeset-ops.github.io',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost:8080',
+]
+
+const corsFor = (req: Request) => {
+  const origin = req.headers.get('Origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 // ─── Instellingen ─────────────────────────────────────────────────────────────
@@ -429,14 +443,55 @@ function buildGroupRequestMail(r: GroupInput) {
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } })
-
 const isEmail = (v: unknown): v is string =>
   typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254
 const str = (v: unknown, max = 200): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
+const isUuid = (v: unknown): v is string =>
+  typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+
+type ReservationRow = {
+  id: string
+  name: string
+  email: string
+  date: string
+  time: string
+  guests: number
+  message: string | null
+  status: string
+  seating_preference: string | null
+  reservation_type: string | null
+}
+
+// De reservering uit de database halen. Dit is de kern van de beveiliging van
+// deze functie: het ontvangeradres en de gegevens in de mail komen NIET uit het
+// verzoek, maar uit de database. Anders kan iedereen die de (publieke) anon key
+// heeft een mail in onze huisstijl, vanaf ons geverifieerde afzenderadres, naar
+// een willekeurig adres laten sturen.
+async function haalReservering(id: string): Promise<ReservationRow | null> {
+  const url = Deno.env.get('SUPABASE_URL')
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!url || !key) {
+    console.error('[send-email] SUPABASE_URL of SUPABASE_SERVICE_ROLE_KEY ontbreekt')
+    return null
+  }
+  const res = await fetch(
+    `${url}/rest/v1/reservations?select=*&id=eq.${encodeURIComponent(id)}`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+  )
+  if (!res.ok) {
+    console.error('[send-email] reservering ophalen mislukt:', res.status)
+    return null
+  }
+  const rijen = await res.json().catch(() => [])
+  return Array.isArray(rijen) && rijen.length > 0 ? (rijen[0] as ReservationRow) : null
+}
+
 Deno.serve(async (req: Request) => {
+  const CORS_HEADERS = corsFor(req)
+  const jsonResponse = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } })
+
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS })
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405)
 
@@ -451,74 +506,118 @@ Deno.serve(async (req: Request) => {
   }
 
   const type = body.type
+
+  // Deze velden komen uit het verzoek en worden ALLEEN gebruikt voor de
+  // groepsaanvraag, die nog geen reservering in de database heeft. Voor alle
+  // mails aan gasten komen de gegevens uit de database; zie hieronder.
   const name = str(body.name, 100)
   const email = str(body.email, 254)
   const phone = str(body.phone, 40)
   const date = str(body.date, 10)
-  const time = str(body.time, 5)
   const guests = Number.isFinite(Number(body.guests)) ? Math.max(0, Math.floor(Number(body.guests))) : 0
   const message = str(body.message, 1000) || null
   const reservationType = str(body.reservationType, 20) || 'lunch'
-  const seating = str(body.seating, 10) || null
   const cancelUrl = str(body.cancelUrl, 400)
   const byGuest = body.byGuest === true
-
-  if (!name) return jsonResponse({ error: 'Naam is verplicht' }, 400)
+  const reservationId = body.reservationId
 
   let mail: { subject: string; html: string; text: string }
   let to: { email: string; name: string }
   let replyTo: { email: string; name: string }
 
   if (type === 'group_request') {
+    // Een groepsaanvraag hoort (nog) niet bij een reservering in de database.
+    // Deze mail gaat uitsluitend naar het restaurant zelf, nooit naar een adres
+    // uit het verzoek, dus hij kan niet als doorgeefluik worden misbruikt.
+    if (!name) return jsonResponse({ error: 'Naam is verplicht' }, 400)
     if (!isEmail(email)) return jsonResponse({ error: 'Geldig e-mailadres is verplicht' }, 400)
     if (!date || guests < 1) return jsonResponse({ error: 'Datum en aantal personen zijn verplicht' }, 400)
     mail = buildGroupRequestMail({ name, email, phone, date, guests, message, reservationType })
     to = { email: RESTAURANT.email, name: FROM_NAME }
     replyTo = { email, name } // personeel antwoordt rechtstreeks aan de gast
-  } else if (type === 'received' || type === 'confirmed') {
-    if (!isEmail(email)) return jsonResponse({ error: 'Geldig e-mailadres is verplicht' }, 400)
-    if (!date || !time) return jsonResponse({ error: 'Datum en tijd zijn verplicht' }, 400)
-    mail = buildReservationMail(
-      { name, date, time, guests: Math.max(1, guests), reservationType, seating, message, cancelUrl },
-      type === 'confirmed',
-    )
-    to = { email, name }
-    replyTo = { email: RESTAURANT.email, name: FROM_NAME }
-  } else if (type === 'cancellation' && byGuest) {
-    // De gast heeft zelf geannuleerd: alleen het restaurant hoeft bericht.
-    if (!date || !time) return jsonResponse({ error: 'Datum en tijd zijn verplicht' }, 400)
-    mail = buildGuestCancelledMail({ name, date, time })
-    to = { email: RESTAURANT.email, name: FROM_NAME }
-    replyTo = { email: RESTAURANT.email, name: FROM_NAME }
-  } else if (type === 'cancellation') {
-    if (!isEmail(email)) return jsonResponse({ error: 'Geldig e-mailadres is verplicht' }, 400)
-    if (!date || !time) return jsonResponse({ error: 'Datum en tijd zijn verplicht' }, 400)
-    mail = buildCancellationMail({ name, date, time })
-    to = { email, name }
-    replyTo = { email: RESTAURANT.email, name: FROM_NAME }
-  } else {
+    return await verstuur(mail, to, replyTo)
+  }
+
+  if (type !== 'received' && type !== 'confirmed' && type !== 'cancellation') {
     return jsonResponse({ error: 'Onbekend e-mailtype' }, 400)
   }
 
-  const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sender: { name: FROM_NAME, email: FROM_EMAIL },
-      to: [to],
-      replyTo,
-      subject: mail.subject,
-      htmlContent: mail.html,
-      textContent: mail.text,
-      tags: [String(type)],
-    }),
-  })
-
-  if (!brevoResponse.ok) {
-    const result = await brevoResponse.json().catch(() => ({}))
-    console.error('[send-email] Brevo fout:', brevoResponse.status, JSON.stringify(result))
-    return jsonResponse({ error: 'E-mail kon niet worden verzonden' }, 502)
+  // Vanaf hier gaat het om een bestaande reservering. Alle gegevens komen uit
+  // de database, niet uit het verzoek: wie de functie aanroept bepaalt hooguit
+  // WELKE reservering gemaild wordt, nooit WAT er in de mail staat of WAAR hij
+  // heen gaat.
+  if (!isUuid(reservationId)) {
+    return jsonResponse({ error: 'reservationId ontbreekt of is ongeldig' }, 400)
   }
 
-  return jsonResponse({ success: true })
+  const r = await haalReservering(reservationId)
+  if (!r) return jsonResponse({ error: 'Reservering niet gevonden' }, 404)
+
+  const rName = str(r.name, 100)
+  const rDate = str(r.date, 10)
+  const rTime = str(r.time, 5)
+
+  if (type === 'cancellation' && byGuest) {
+    // De gast heeft zelf geannuleerd: alleen het restaurant hoeft bericht.
+    mail = buildGuestCancelledMail({ name: rName, date: rDate, time: rTime })
+    to = { email: RESTAURANT.email, name: FROM_NAME }
+    replyTo = { email: RESTAURANT.email, name: FROM_NAME }
+    return await verstuur(mail, to, replyTo)
+  }
+
+  if (!isEmail(r.email)) {
+    console.error('[send-email] reservering zonder geldig e-mailadres:', r.id)
+    return jsonResponse({ error: 'Reservering heeft geen geldig e-mailadres' }, 422)
+  }
+
+  if (type === 'cancellation') {
+    mail = buildCancellationMail({ name: rName, date: rDate, time: rTime })
+  } else {
+    mail = buildReservationMail(
+      {
+        name: rName,
+        date: rDate,
+        time: rTime,
+        guests: Math.max(1, Number(r.guests) || 1),
+        reservationType: str(r.reservation_type, 20) || 'lunch',
+        seating: str(r.seating_preference, 10) || null,
+        message: str(r.message, 1000) || null,
+        cancelUrl,
+      },
+      type === 'confirmed',
+    )
+  }
+  to = { email: r.email, name: rName }
+  replyTo = { email: RESTAURANT.email, name: FROM_NAME }
+  return await verstuur(mail, to, replyTo)
+
+  // ── Versturen via Brevo ────────────────────────────────────────────────────
+  async function verstuur(
+    mail: { subject: string; html: string; text: string },
+    to: { email: string; name: string },
+    replyTo: { email: string; name: string },
+  ): Promise<Response> {
+
+    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sender: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [to],
+        replyTo,
+        subject: mail.subject,
+        htmlContent: mail.html,
+        textContent: mail.text,
+        tags: [String(type)],
+      }),
+    })
+
+    if (!brevoResponse.ok) {
+      const result = await brevoResponse.json().catch(() => ({}))
+      console.error('[send-email] Brevo fout:', brevoResponse.status, JSON.stringify(result))
+      return jsonResponse({ error: 'E-mail kon niet worden verzonden' }, 502)
+    }
+
+    return jsonResponse({ success: true })
+  }
 })
