@@ -15,6 +15,37 @@
     <link rel="canonical" href="https://denwittenhaen.com/" />
     <meta name="theme-color" content="#2c1f0f" />
 
+    <!--
+      Content Security Policy. GitHub Pages kan geen HTTP-headers zetten, dus
+      staat het beleid hier als meta-tag. Dat werkt voor alles behalve
+      frame-ancestors; die richtlijn wordt in een meta-tag genegeerd.
+
+      De twee sha256-waarden horen bij de twee inline scripts verderop in dit
+      bestand (de structured data en de routing-fix). Wijzig je een van die
+      scripts, ook maar één spatie, dan moet de bijbehorende hash mee. De
+      nieuwe waarde staat in de console van de browser in de foutmelding.
+
+      'unsafe-inline' bij style-src is onvermijdelijk: React en de
+      UI-componenten zetten stijlen als style-attribuut op elementen, en
+      daarvoor bestaat geen hash. Voor scripts, waar het risico zit, wordt het
+      niet gebruikt.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               base-uri 'self';
+               object-src 'none';
+               form-action 'self';
+               img-src 'self' data: blob:;
+               font-src 'self';
+               style-src 'self' 'unsafe-inline';
+               script-src 'self' 'sha256-jxUCs+3c4P1UU6T4giMbvgwYQVIhzm9O4nMQjMKX6jU=' 'sha256-+2g9rAYrpHF+60noEEKmNBwamPa9wPMDvfvV7T3Bo3E=';
+               connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+               frame-src 'none';
+               upgrade-insecure-requests"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <!-- Structured data (openingstijden e.d.) -->
     <script type="application/ld+json">
       {

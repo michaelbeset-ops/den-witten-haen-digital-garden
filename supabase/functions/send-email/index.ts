@@ -12,10 +12,24 @@
 //   cancellation    naar de gast (personeel annuleert) of naar het restaurant (gast annuleert zelf)
 //   group_request   naar het restaurant, aanvraag voor meer dan 8 personen
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+// Alleen onze eigen site mag deze functie vanuit de browser aanroepen. Dat
+// stopt misbruik vanaf een vreemde pagina; het is geen vervanging voor
+// controle aan de serverkant, want CORS geldt alleen in de browser.
+const ALLOWED_ORIGINS = [
+  'https://denwittenhaen.com',
+  'https://www.denwittenhaen.com',
+  'http://localhost:8080',
+  'http://localhost:5173',
+]
+
+const corsHeaders = (req: Request): Record<string, string> => {
+  const origin = req.headers.get('Origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 // ─── Instellingen ─────────────────────────────────────────────────────────────
@@ -58,10 +72,25 @@ const escape = (v: unknown): string =>
 const nl2br = (v: string): string => escape(v).replace(/\r?\n/g, '<br>')
 
 // Alleen links naar onze eigen site toestaan, zodat een meegestuurde URL nooit
-// een vreemde bestemming in de mail kan zetten.
+// een vreemde bestemming in de mail kan zetten. De aanroeper kan deze functie
+// zonder inloggen aanroepen, dus de URL die hij meestuurt is niet te
+// vertrouwen: zou hij vrij zijn, dan kan iemand een phishinglink in een mail
+// met onze afzender en opmaak laten zetten.
+const ALLOWED_LINK_HOSTS = new Set([
+  'denwittenhaen.com',
+  'www.denwittenhaen.com',
+])
+
 const safeUrl = (v: unknown): string => {
   const s = String(v ?? '')
-  return /^https?:\/\/[^\s"'<>]+$/.test(s) ? s : ''
+  if (!/^https:\/\/[^\s"'<>]+$/.test(s)) return ''
+  let url: URL
+  try {
+    url = new URL(s)
+  } catch {
+    return ''
+  }
+  return ALLOWED_LINK_HOSTS.has(url.hostname) ? url.toString() : ''
 }
 
 function formatDutchDate(dateStr: string): string {
@@ -409,15 +438,17 @@ function buildGroupRequestMail(r: GroupInput) {
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } })
+const makeJsonResponse = (req: Request) => (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } })
 
 const isEmail = (v: unknown): v is string =>
   typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254
 const str = (v: unknown, max = 200): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS })
+  const jsonResponse = makeJsonResponse(req)
+
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) })
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405)
 
   const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY')

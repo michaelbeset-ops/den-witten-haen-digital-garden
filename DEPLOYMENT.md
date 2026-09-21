@@ -11,6 +11,21 @@
 > - `005_guest_cancellation.sql` voegt de annuleerlink toe die in elke
 >   bevestigingsmail staat. Zonder deze migratie werkt die link niet en moeten
 >   gasten bellen om te annuleren.
+> - `006_remove_anon_insert.sql` haalt de policy weg waarmee iedereen met de
+>   publieke anon-sleutel rechtstreeks reserveringen kon wegschrijven, buiten
+>   alle controles van `create_reservation` om (maximaal 8 personen, gesloten
+>   dagen, capaciteit). De website reserveert alleen via die functie, dus dit
+>   verandert niets aan het formulier.
+>
+> **Edge Functions opnieuw deployen na wijzigingen.** `send-email` en
+> `manage-users` staan in deze repo, maar draaien pas in de nieuwe vorm zodra ze
+> in Supabase opnieuw zijn gedeployed (*Edge Functions* → functie → *Deploy*, of
+> `supabase functions deploy send-email manage-users`). Beide accepteren nu
+> alleen nog aanvragen vanaf `denwittenhaen.com` (en localhost tijdens het
+> ontwikkelen), en de annuleerlink in de mail moet naar het eigen domein wijzen.
+> Draait de site ooit op een ander adres, pas dan `ALLOWED_ORIGINS` en
+> `ALLOWED_LINK_HOSTS` boven in die bestanden aan, anders werken reserveren en
+> het gebruikersbeheer niet meer.
 >
 > **Supabase pauzeert een gratis project na zeven dagen zonder activiteit.** De
 > workflow `.github/workflows/supabase-keepalive.yml` voorkomt dat: die doet elke
