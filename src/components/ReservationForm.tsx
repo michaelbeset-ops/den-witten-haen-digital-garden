@@ -26,12 +26,13 @@ import {
   getSlotsForDate,
   windowLoad,
   fetchAvailability,
+  todayStr,
   tomorrowStr,
   maxDateStr,
   reservationErrorMessage,
 } from '@/lib/reservations'
 
-const EMPTY_AVAILABILITY: Availability = { counts: {}, blockedTimes: new Set(), dayBlocked: false }
+const EMPTY_AVAILABILITY: Availability = { counts: {}, blockedTimes: new Set(), dayBlocked: false, unavailable: false }
 
 type FieldErrors = {
   name?: string
@@ -83,6 +84,19 @@ const ReservationForm = ({ variant = 'page', onClose }: Props) => {
   // aanvraag die naar het restaurant wordt gemaild.
   const isGroup = !isNaN(guestsNum) && guestsNum > MAX_GUESTS_PER_RESERVATION
   const slots = getSlotsForDate(date)
+
+  // Eén keer bij het openen vaststellen of de database überhaupt antwoordt.
+  // Zo ziet de gast een storing meteen, en niet pas nadat hij zijn naam,
+  // e-mailadres en telefoonnummer heeft ingevuld.
+  useEffect(() => {
+    let cancelled = false
+    fetchAvailability(todayStr()).then((a) => {
+      // Alleen een storing overnemen. De bezetting van vandaag zegt niets over
+      // de datum die de gast straks kiest, dus die laten we links liggen.
+      if (!cancelled && a.unavailable) setAvailability(a)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   // Beschikbaarheid en sluitingen ophalen zodra er een datum gekozen is.
   useEffect(() => {
@@ -281,6 +295,18 @@ const ReservationForm = ({ variant = 'page', onClose }: Props) => {
 
   return (
     <form onSubmit={handleSubmit} className={isPopup ? 'space-y-4' : 'space-y-4 sm:space-y-5'} noValidate>
+      {availability.unavailable && (
+        <div
+          role="alert"
+          className="p-4 rounded-md bg-amber-50 border border-amber-300 text-amber-900 text-sm font-sans leading-relaxed"
+        >
+          <strong className="block mb-1">Online reserveren lukt nu niet</strong>
+          Door een storing kunnen wij de beschikbaarheid niet ophalen. Belt u ons
+          even op <a href={PHONE_HREF} className="underline font-medium">{PHONE_NUMBER}</a>,
+          dan noteren wij uw reservering meteen. Onze excuses voor het ongemak.
+        </div>
+      )}
+
       {generalError && (
         <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm font-sans">
           {generalError}
@@ -498,7 +524,13 @@ const ReservationForm = ({ variant = 'page', onClose }: Props) => {
         />
       </div>
 
-      <Button type="submit" variant="default" size="lg" className="w-full" disabled={submitting}>
+      <Button
+        type="submit"
+        variant="default"
+        size="lg"
+        className="w-full"
+        disabled={submitting || (availability.unavailable && !isGroup)}
+      >
         {submitting ? 'Versturen...' : isGroup ? 'Groepsaanvraag versturen' : 'Reservering versturen'}
       </Button>
 

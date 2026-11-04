@@ -115,20 +115,60 @@ export type Availability = {
   counts: SlotCounts
   blockedTimes: Set<string>
   dayBlocked: boolean
+  /**
+   * De database was niet te bereiken. Dan weten we niets: niet hoe vol het is
+   * en niet wat gesloten is. Het formulier moet dat eerlijk tonen in plaats van
+   * alle tijdsloten vrij te laten lijken en de gast pas na het invullen te
+   * laten stranden.
+   */
+  unavailable: boolean
 }
 
 // Haalt bezetting per tijdslot en sluitingen op voor een datum.
+//
+// Mislukt het ophalen, dan proberen we het eenmaal opnieuw. Een korte hapering
+// is zo verholpen; pas als het twee keer misgaat gaan we ervan uit dat de
+// database echt onbereikbaar is.
+const STORING: Availability = {
+  counts: {}, blockedTimes: new Set(), dayBlocked: false, unavailable: true,
+}
+
+// Eén poging. Geeft null terug als de database niet antwoordt, of dat nu komt
+// doordat het verzoek een fout teruggeeft of doordat het verzoek zelf
+// mislukt — bij een onbereikbare server gooit de client een exception in
+// plaats van netjes een fout terug te geven.
+async function haalOp(date: string) {
+  try {
+    const [slotRes, blockedRes] = await Promise.all([
+      supabase.rpc('get_slot_counts', { check_date: date }),
+      supabase.from('blocked_slots').select('time_from, time_to').eq('date', date),
+    ])
+    if (slotRes.error) {
+      console.error('Beschikbaarheid ophalen mislukt:', slotRes.error)
+      return null
+    }
+    return { slotRes, blockedRes }
+  } catch (e) {
+    console.error('Beschikbaarheid ophalen mislukt:', e)
+    return null
+  }
+}
+
 export async function fetchAvailability(date: string): Promise<Availability> {
-  const [slotRes, blockedRes] = await Promise.all([
-    supabase.rpc('get_slot_counts', { check_date: date }),
-    supabase.from('blocked_slots').select('time_from, time_to').eq('date', date),
-  ])
+  let resultaat = await haalOp(date)
+
+  if (!resultaat) {
+    await new Promise(resolve => setTimeout(resolve, 600))
+    resultaat = await haalOp(date)
+  }
+
+  if (!resultaat) return STORING
+
+  const { slotRes, blockedRes } = resultaat
 
   const counts: SlotCounts = {}
-  if (!slotRes.error) {
-    for (const row of (slotRes.data ?? []) as { slot_time: string; slot_count: number }[]) {
-      counts[row.slot_time] = row.slot_count
-    }
+  for (const row of (slotRes.data ?? []) as { slot_time: string; slot_count: number }[]) {
+    counts[row.slot_time] = row.slot_count
   }
 
   let dayBlocked = false
@@ -144,7 +184,7 @@ export async function fetchAvailability(date: string): Promise<Availability> {
     }
   }
 
-  return { counts, blockedTimes, dayBlocked }
+  return { counts, blockedTimes, dayBlocked, unavailable: false }
 }
 
 export const isSlotFull = (a: Availability, slot: string): boolean =>

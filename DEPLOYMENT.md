@@ -32,6 +32,68 @@
 > werkdag een klein leesverzoek. Daarvoor moeten de secrets `VITE_SUPABASE_URL` en
 > `VITE_SUPABASE_ANON_KEY` in GitHub staan (die zijn er al voor de build).
 
+# Reserveringssysteem herstellen na verlies van het Supabase-project
+
+> **Wat er is gebeurd.** Op 1 oktober 2026 verdween het Supabase-project
+> `raaaglsimoqkfrltilbj`. De hostnaam lost sindsdien niet meer op
+> (`curl: (6) Could not resolve host`), en dat betekent iets anders dan een
+> gepauzeerd project: een gepauzeerd project blijft in DNS staan. Het project
+> is dus verwijderd. Gasten konden vanaf die dag niet meer online reserveren.
+> De dagelijkse controle meldde het trouw, vierentwintig keer, maar zonder dat
+> iemand daar bericht van kreeg. Dat laatste is nu opgelost: de workflow opent
+> voortaan een issue in deze repo.
+
+De website zelf staat er nog gewoon en hoeft niet opnieuw gebouwd te worden —
+alleen de database en de e-mailfunctie moeten terug. Reken op een halfuur.
+
+**1. Nieuw Supabase-project**
+
+Maak een nieuw project aan in een EU-regio (Frankfurt of Ierland), zodat de
+privacyverklaring blijft kloppen. Zet **zelfregistratie uit**: Authentication →
+Providers → Email → *Enable signup* op uit. Anders kan iedereen een account
+maken, en een account geeft toegang tot alle reserveringsgegevens.
+
+**2. Database opzetten**
+
+Plak `supabase/herstel.sql` in de SQL Editor en druk op Run. Dat ene bestand
+zet de twee tabellen, de beveiligingsregels, de vier functies en de
+realtime-koppeling in één keer goed. De losse migraties hoef je niet meer op
+volgorde te draaien; die blijven alleen staan voor de geschiedenis.
+
+**3. Sleutels bijwerken in GitHub**
+
+Settings → Secrets and variables → Actions. Werk `VITE_SUPABASE_URL` en
+`VITE_SUPABASE_ANON_KEY` bij met de waarden van het nieuwe project (Supabase →
+Project Settings → API). Start daarna **Actions → Deploy to GitHub Pages → Run
+workflow**, want deze twee waarden worden tijdens het bouwen in de JavaScript
+gebakken. Zonder die herbouw blijft de site de oude, dode database aanroepen.
+
+**4. Edge Functions terugzetten**
+
+Deploy `send-email` en `manage-users` opnieuw (Supabase → Edge Functions, of
+`supabase functions deploy send-email manage-users`) en zet de secret
+`BREVO_API_KEY` terug onder Edge Functions → Secrets. Brevo zelf is een los
+account en staat er waarschijnlijk nog; controleer of het domein
+`denwittenhaen.com` nog geverifieerd is.
+
+**5. Beheerder aanmaken**
+
+Authentication → Users → *Add user* met het e-mailadres van het restaurant.
+Laat daarna via "wachtwoord vergeten" op de inlogpagina een wachtwoord
+instellen.
+
+**6. Controleren**
+
+Start **Actions → Supabase wakker houden → Run workflow** en kijk of hij groen
+wordt. Maak daarna een testreservering met je eigen e-mailadres: komt de mail
+aan, werkt de annuleerlink, en verschijnt de reservering in het dashboard?
+
+> **De oude reserveringen zijn weg.** Met het project is ook de inhoud van de
+> database verdwenen; die is hiermee niet terug te halen. Reserveringen van na
+> 1 oktober zijn er sowieso niet, want boeken lukte toen al niet meer. Vraag
+> het restaurant of zij nog een papieren of telefonische agenda hebben van de
+> afgelopen weken die erin moet.
+
 # Live zetten via Vimexx
 
 De site bouwt naar statische bestanden (`npm run build` → map `dist/`) en wordt via
