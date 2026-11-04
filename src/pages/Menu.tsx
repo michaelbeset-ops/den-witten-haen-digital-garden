@@ -21,43 +21,41 @@ const drinks: MenuCategory[] = [
     title: "Koffie | Thee | Chocolademelk",
     cols: true,
     items: [
-      { name: "Koffie", price: "€ 3,00" },
-      { name: "Koffie verkeerd", price: "€ 3,25" },
-      { name: "Cappuccino", price: "€ 3,25" },
-      { name: "Cappuccino met havermelk", price: "€ 3,50" },
+      { name: "Koffie", price: "€ 3,25" },
+      { name: "Koffie verkeerd", price: "€ 3,50" },
+      { name: "Cappuccino", price: "€ 3,50" },
       { name: "Latte Macchiato", price: "€ 3,50" },
       { name: "Flat White", price: "€ 4,25" },
       { name: "Cortado", price: "€ 3,00" },
       { name: "Espresso", price: "€ 2,75" },
       { name: "Dubbele espresso", price: "€ 4,50" },
-      { name: "Thee", price: "€ 3,00" },
-      { name: "Verse munt thee | Verse gember thee", price: "€ 3,50" },
-      { name: "Warme chocolademelk", price: "€ 3,00" },
+      { name: "Thee", price: "€ 3,50" },
+      { name: "Muntthee | Gember thee", price: "€ 3,75" },
+      { name: "Warme chocolademelk", price: "€ 3,75" },
       { name: "Slagroom", price: "€ 0,50" },
+      { name: "Havermelk", price: "+ € 0,50" },
     ],
   },
   {
     id: "dranken",
-    title: "Dranken",
+    title: "Fris | Bier | Wijn",
     cols: true,
     items: [
-      { name: "(Karne)melk", price: "€ 2,00" },
-      { name: "Fristi | Chocomel", price: "€ 3,25" },
-      { name: "Smoothie (seizoen)", price: "€ 4,50" },
-      { name: "Cola | Cola zero", price: "€ 3,25" },
-      { name: "Ginger Ale | Ginger Beer | Tonic | Bitterlemon | Pink aromatic", price: "€ 3,25" },
-      { name: "Earth water Still | Sparkling", price: "€ 3,00" },
-      { name: "Fuzetea | Green | Mango Chamomile | Black tea hibiscus", price: "€ 3,25" },
-      { name: "Rivella", price: "€ 3,25" },
-      { name: "Verse jus d'orange", price: "€ 4,00" },
-      { name: "Biologische Appelsap", price: "€ 3,50" },
-      { name: "Wit | Rood | Rosé (glas)", price: "€ 4,25" },
-      { name: "Fles wijn", price: "€ 21,50" },
-      { name: "Fles bubbels Cava", price: "€ 21,50" },
-      { name: "Hertog Jan Pils", price: "€ 3,25" },
-      { name: "Vedett Extra Pilsener / White / IPA", price: "€ 4,75" },
-      { name: "Vrijwit 0,5%", price: "€ 4,75" },
-      { name: "Jupiler 0,0%", price: "€ 3,25" },
+      { name: "Cola | Cola zero", price: "€ 3,50" },
+      { name: "Fanta", price: "€ 3,50" },
+      { name: "Orange | Cassis", price: "€ 3,50" },
+      { name: "Lipton", desc: "Green · Sparkling · Peach", price: "€ 3,50" },
+      { name: "Royal Bliss", price: "€ 3,50" },
+      { name: "Ginger Ale | Tonic | Bitter Lemon", price: "€ 3,50" },
+      { name: "Rivella", price: "€ 3,50" },
+      { name: "Schulp biologisch sapje", desc: "Appel · appel-aardbei · jus d'orange", price: "€ 4,00" },
+      { name: "Fristi | Chocomel", price: "€ 3,50" },
+      { name: "Wit | Rood | Rosé (glas)", price: "€ 4,50" },
+      { name: "Fles wijn", price: "€ 22,50" },
+      { name: "Hertog Jan", price: "€ 3,50" },
+      { name: "Jupiler 0.0%", price: "€ 3,50" },
+      { name: "Vedett", desc: "IPA · Extra White", price: "€ 4,75" },
+      { name: "Vrijwit 0.5%", price: "€ 4,75" },
     ],
   },
 ];
@@ -67,67 +65,66 @@ const food: MenuCategory[] = [
     id: "soep",
     title: "Soep van de dag",
     items: [
-      { name: "Soep van de dag", desc: "Vraag naar ons aanbod van de dag", price: "€ 7,50" },
+      { name: "Soep van de dag", desc: "Vraag naar ons aanbod van de dag", price: "€ 8,50" },
     ],
   },
   {
     id: "sandwiches",
-    title: "Sandwiches & Broodjes",
+    title: "Sandwiches",
     items: [
-      { name: "Sandwich Geitenkaas", desc: "Appel · honing · walnoten", price: "€ 10,50" },
-      { name: "Sandwich Carpaccio", desc: "Parmezaanse kaas · truffelmayo · salade · pijnboompitten", price: "€ 10,50" },
-      { name: "Italiaanse bol", desc: "Gezond · ham · kaas · ei · rauwkost", price: "€ 9,50" },
-      { name: "Club Sandwich", desc: "Spek · kip · ei · sriracha mayo", price: "€ 9,50" },
+      { name: "Sandwich carpaccio", desc: "Parmezaanse kaas · truffelmayo · salade · pijnboompitten", price: "€ 12,00" },
+      { name: "Sandwich geitenkaas", desc: "Appel · honing · walnoten", price: "€ 11,00", vega: true },
+    ],
+  },
+  {
+    id: "club",
+    title: "Club sandwich",
+    items: [
+      { name: "Club kip", desc: "Kip · spek · sriracha mayo · ei · tomaat", price: "€ 10,50" },
+      { name: "Club vega", desc: "Hummus · geitenkaas · gegrilde groenten", price: "€ 10,50", vega: true },
     ],
   },
   {
     id: "kroketten",
     title: "Kroketten",
     items: [
-      { name: "Bourgondische kroketten", desc: "Twee rundvlees · brood · mosterdmayonaise", price: "€ 10,50" },
-      { name: "Cas & Kas Vegan kroketten", desc: "Twee vegan · brood · mosterdmayonaise", price: "€ 10,50", vega: true },
+      { name: "Bourgondische kroketten", desc: "Twee rundvlees · brood · mosterdmayonaise", price: "€ 11,50" },
+      { name: "Cas & Kas vegan kroketten", desc: "Twee vegan · brood · mosterdmayonaise", price: "€ 11,50", vega: true },
     ],
   },
   {
     id: "flammkuchen",
     title: "Flammkuchen",
     items: [
-      { name: "Spek", desc: "Roomkaas · mozarella · rode ui", price: "€ 13,50" },
-      { name: "Tonijn", desc: "Crème fraîche · geraspte kaas · bieslook", price: "€ 13,50" },
-      { name: "Vega", desc: "Champignon · kastanje · crème fraîche · geitenkaas", price: "€ 13,50", vega: true },
+      { name: "Spek", desc: "Roomkaas · mozzarella · rode ui", price: "€ 15,00" },
+      { name: "Vega", desc: "Champignon · kastanje · roomkaas · geitenkaas", price: "€ 14,00", vega: true },
     ],
   },
   {
     id: "warm",
     title: "Warme gerechten",
     items: [
-      { name: "Friet stoofvlees", price: "€ 12,50" },
-      { name: "Het Witten Haentje", desc: "Soep · rundvleeskroket · tonijnsalade · eiersalade", price: "€ 13,50" },
-      { name: "Uitsmijter Den Witten Haen", desc: "Bruin brood · 3 eieren · extra beleg € 1,00: ham, kaas of spek", price: "€ 8,00" },
+      { name: "Friet stoofvlees", price: "€ 14,00" },
+      { name: "Het Witten Haentje", desc: "Soep · rundvleeskroket · eiersalade · ham of kaas", price: "€ 14,00" },
+      { name: "Uitsmijter Den Witten Haen", desc: "Bruin brood · 3 eieren · extra beleg € 0,50 per beleg: ham, kaas of spek", price: "€ 9,50" },
+      { name: "Uitsmijter carpaccio", price: "€ 14,50" },
     ],
   },
   {
     id: "salades",
     title: "Salades",
     items: [
-      { name: "Tonijn Salade", desc: "Romeinse sla · cherry tomaat · rode ui · ei · olijf · paprika · maïs · vinaigrette", price: "€ 12,50" },
-      { name: "Blauwe Kaas Salade", desc: "Gemengde salade · blauwe kaas · druiven · noten · honing", price: "€ 13,50", vega: true },
+      { name: "Carpaccio", desc: "Spek · kappertjes · mesclun · parmezaan · ui · tomaat", price: "€ 14,50" },
+      { name: "Geitenkaas salade", desc: "Zoetzure pompoen · druiven · aceto dressing · walnoten · pecannoten", price: "€ 14,50", vega: true },
     ],
   },
   {
     id: "tostis",
     title: "Tosti's",
     items: [
-      { name: "Tosti van Gogh", desc: "Brie · walnoten · honing", price: "€ 8,00", vega: true },
-      { name: "Croque Monsieur", desc: "Ham · kaas", price: "€ 6,00" },
-      { name: "Croque Madame", desc: "Gebakken ei · ham · kaas", price: "€ 6,50" },
-    ],
-  },
-  {
-    id: "woensdag",
-    title: "Woensdag Special",
-    items: [
-      { name: "Pannenkoeken", desc: "Extra beleg € 1,00: appel · kaas · spek", price: "€ 6,00" },
+      { name: "Tosti van Gogh", desc: "Geitenkaas · walnoten · honing", price: "€ 9,00", vega: true },
+      { name: "Croque Monsieur", desc: "Bechamel · geraspte kaas", price: "€ 8,00" },
+      { name: "Croque Madame", desc: "Bechamel · gebakken ei", price: "€ 8,00" },
     ],
   },
   {
@@ -135,25 +132,25 @@ const food: MenuCategory[] = [
     title: "Lekker voor bij de borrel",
     items: [
       { name: "Bitterballen 8 stuks", price: "€ 8,50" },
-      { name: "Bittergarnituur 8 stuks", price: "€ 8,50" },
+      { name: "Bittergarnituur 8 stuks", price: "€ 15,00" },
     ],
   },
   {
     id: "taart",
     title: "Taart",
     items: [
-      { name: "Huisgemaakte taart", price: "€ 4,25" },
-      { name: "Huisgemaakte lekkernijen", price: "€ 2,75" },
+      { name: "Huisgemaakte taart", desc: "Appel · kokoslimoen · taart van de week", price: "€ 4,50" },
+      { name: "Huisgemaakte lekkernijen", desc: "Brownie · boterkoek", price: "€ 3,00" },
     ],
   },
   {
     id: "kinderen",
     title: "Voor de kleine gasten",
     items: [
-      { name: "Patatje", desc: "Friet · appelmoes · kroket, bitterballen of frikandel", price: "€ 5,50" },
-      { name: "Bammetje", desc: "Ham · kaas · hagelslag · jam", price: "€ 2,75" },
-      { name: "Krokettenpretje", desc: "Brood · kroket · mayonaise", price: "€ 4,00" },
-      { name: "Friet met mayo", price: "€ 3,75" },
+      { name: "Patatje", desc: "Friet · mayo · keuze uit kroket, bitterballen of frikandel", price: "€ 6,50" },
+      { name: "Bammetje", desc: "Ham · kaas · hagelslag · jam", price: "€ 3,50" },
+      { name: "Krokettenpretje", desc: "Brood · kroket · mayonaise", price: "€ 5,00" },
+      { name: "Friet met mayo", price: "€ 4,50" },
     ],
   },
 ];
@@ -163,10 +160,14 @@ const navItems = [
   { id: "dranken", label: "Dranken" },
   { id: "soep", label: "Soep" },
   { id: "sandwiches", label: "Sandwiches" },
+  { id: "club", label: "Club sandwich" },
+  { id: "kroketten", label: "Kroketten" },
   { id: "flammkuchen", label: "Flammkuchen" },
   { id: "warm", label: "Warm" },
   { id: "salades", label: "Salades" },
   { id: "tostis", label: "Tosti's" },
+  { id: "borrel", label: "Borrel" },
+  { id: "taart", label: "Taart" },
   { id: "kinderen", label: "Kinderen" },
   { id: "hightea", label: "High Tea" },
   { id: "lunch", label: "Lunch" },
@@ -237,7 +238,7 @@ const MenuPage = () => (
       </div>
 
       <div className="bg-card rounded-xl border border-border p-6 mb-10" id="dranken">
-        <CategoryHeader title="Dranken" />
+        <CategoryHeader title="Fris | Bier | Wijn" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
           {drinks[1].items.map((item) => <MenuRow key={item.name} item={item} />)}
         </div>
@@ -284,7 +285,7 @@ const MenuPage = () => (
           <div className="bg-background rounded-lg p-5 border border-border">
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-serif text-lg">Kakellunch</h3>
-              <span className="font-sans font-bold text-primary">€ 16,50 <span className="text-xs font-normal text-muted-foreground">p.p.</span></span>
+              <span className="font-sans font-bold text-primary">€ 17,00 <span className="text-xs font-normal text-muted-foreground">p.p.</span></span>
             </div>
             <p className="text-xs text-muted-foreground font-sans leading-relaxed">
               Soep · broodjes · sandwiches · salade · melk · karnemelk · jus d'orange · fruit · koffie · thee
@@ -293,7 +294,7 @@ const MenuPage = () => (
           <div className="bg-background rounded-lg p-5 border border-border">
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-serif text-lg">Kraailunch</h3>
-              <span className="font-sans font-bold text-primary">€ 18,00 <span className="text-xs font-normal text-muted-foreground">p.p.</span></span>
+              <span className="font-sans font-bold text-primary">€ 19,50 <span className="text-xs font-normal text-muted-foreground">p.p.</span></span>
             </div>
             <p className="text-xs text-muted-foreground font-sans leading-relaxed">
               Soep · broodjes · sandwiches · salade · warme snack · melk · karnemelk · jus d'orange · fruit · koffie · thee

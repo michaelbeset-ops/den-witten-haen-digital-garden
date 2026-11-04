@@ -9,7 +9,7 @@ import {
   PHONE_NUMBER,
 } from "@/lib/reservations";
 
-import gevelImage from "@/assets/pand-groenmarkt.jpg";
+import gevelImage from "@/assets/gevel-bakfiets.jpg";
 
 const spaces = [
   {
@@ -35,15 +35,16 @@ const LocationsPage = () => (
         Alles zit onder één dak: de lunchroom, de zalen en de stadstuin.
       </p>
 
-      <div className="rounded-lg overflow-hidden shadow-lg mb-10">
+      <figure className="mb-10 flex justify-center">
         <img
           src={gevelImage}
-          alt="Het pand van Den Witten Haen aan de Groenmarkt in Dordrecht"
-          className="w-full h-56 sm:h-72 md:h-96 object-cover"
-          width={1600}
-          height={1200}
+          alt="De gevel van Den Witten Haen aan de Groenmarkt in Dordrecht, met een bakfiets ervoor"
+          className="rounded-lg shadow-lg w-full max-w-xs h-auto sm:w-auto sm:max-w-none sm:max-h-[520px]"
+          width={641}
+          height={1318}
+          loading="lazy"
         />
-      </div>
+      </figure>
 
       {/* Praktische gegevens */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 border-y border-border py-8 mb-10">
