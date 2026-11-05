@@ -14,7 +14,7 @@ create or replace function public.get_reservation_for_cancel(p_id uuid)
 returns table(
   name             text,
   date             date,
-  time             text,
+  "time"           text,
   guests           integer,
   status           text,
   reservation_type text,
@@ -45,7 +45,7 @@ create or replace function public.cancel_reservation(p_id uuid)
 returns table(
   name             text,
   date             date,
-  time             text,
+  "time"           text,
   guests           integer,
   reservation_type text
 )
