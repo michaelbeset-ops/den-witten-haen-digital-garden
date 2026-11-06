@@ -89,7 +89,7 @@ jobs:
           echo "Supabase reageert normaal; het project blijft actief."
 
       - name: Alarm slaan of intrekken
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           PROBLEEM: ${{ steps.ping.outputs.probleem }}
         with:
