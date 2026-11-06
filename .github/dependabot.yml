@@ -1,0 +1,21 @@
+# Dependabot meldt wekelijks nieuwe versies van de gebruikte pakketten, zodat
+# een beveiligingslek in een afhankelijkheid niet ongemerkt blijft liggen.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Amsterdam
+    open-pull-requests-limit: 5
+    groups:
+      # Eén pull request voor alle kleine updates, zodat het overzichtelijk blijft.
+      patch-en-minor:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly

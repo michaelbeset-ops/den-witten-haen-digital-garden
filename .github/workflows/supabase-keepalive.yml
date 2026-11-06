@@ -1,0 +1,151 @@
+name: Supabase wakker houden
+
+# Een gratis Supabase-project wordt na zeven dagen zonder activiteit gepauzeerd.
+# Dan kan niemand meer reserveren totdat iemand het handmatig hervat. Deze
+# workflow doet elke werkdag een klein, ongevaarlijk verzoek aan de database,
+# zodat dat niet gebeurt.
+#
+# Gaat er iets mis, dan opent deze workflow een issue in deze repo en werkt die
+# bij zolang het probleem duurt. Zodra de database weer antwoordt, wordt het
+# issue automatisch gesloten. Dat is er niet voor de sier: in oktober 2026 is
+# het project verdwenen en zijn er vierentwintig mislukte controles achter
+# elkaar geweest zonder dat iemand het zag, terwijl gasten vijf weken lang niet
+# konden reserveren.
+#
+# Let op: GitHub zet een workflow met een schema uit na zestig dagen zonder
+# activiteit in de repo. Blijft het stil, zet hem dan af en toe handmatig aan
+# via Actions.
+
+on:
+  schedule:
+    # Elke maandag tot en met vrijdag om 07:12 UTC. Een oneven minuut, zodat we
+    # niet samenvallen met de drukte op het hele uur bij GitHub Actions.
+    - cron: "12 7 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Database aanroepen
+        id: ping
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -uo pipefail
+
+          fout() {
+            echo "probleem<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$1" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+            echo "$1"
+            exit 0
+          }
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            fout "De secrets VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY ontbreken in deze repo."
+          fi
+
+          # Leest alleen het aantal gasten per tijdslot voor vandaag. Geen
+          # persoonsgegevens, geen schrijfactie.
+          today="$(date -u +%F)"
+
+          status=$(curl -sS -o /tmp/response.json -w '%{http_code}' --max-time 30 \
+            -X POST "${SUPABASE_URL}/rest/v1/rpc/get_slot_counts" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"check_date\":\"${today}\"}" 2>/tmp/curl-fout.txt)
+          curl_rc=$?
+
+          if [ "${curl_rc}" -ne 0 ]; then
+            melding="$(cat /tmp/curl-fout.txt)"
+            if [ "${curl_rc}" -eq 6 ]; then
+              fout "De hostnaam van het Supabase-project bestaat niet meer: ${melding}
+
+          Een gepauzeerd project blijft in DNS staan. Lost de naam helemaal niet
+          meer op, dan is het project verwijderd en moet het opnieuw worden
+          opgezet. Zie supabase/herstel.sql en DEPLOYMENT.md."
+            fi
+            fout "Supabase was niet te bereiken (curl-code ${curl_rc}): ${melding}"
+          fi
+
+          echo "HTTP-status: ${status}"
+
+          if [ "${status}" != "200" ]; then
+            fout "Supabase antwoordde met HTTP ${status} in plaats van 200:
+
+          $(head -c 500 /tmp/response.json)
+
+          Bij een gepauzeerd project hervat je het in het Supabase-dashboard.
+          Bij 401 of 404 kloppen de secrets of de functie get_slot_counts niet meer."
+          fi
+
+          echo "Supabase reageert normaal; het project blijft actief."
+
+      - name: Alarm slaan of intrekken
+        uses: actions/github-script@v7
+        env:
+          PROBLEEM: ${{ steps.ping.outputs.probleem }}
+        with:
+          script: |
+            const titel = 'Reserveringssysteem: Supabase reageert niet'
+            const probleem = process.env.PROBLEEM || ''
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'keepalive',
+              per_page: 10,
+            })
+            const bestaand = open.find(i => i.title === titel)
+
+            if (!probleem) {
+              if (bestaand) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: bestaand.number,
+                  body: `De database antwoordt weer normaal. Zie [de controle van vandaag](${run}).`,
+                })
+                await github.rest.issues.update({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: bestaand.number, state: 'closed',
+                })
+                core.notice('Probleem voorbij; het issue is gesloten.')
+              }
+              return
+            }
+
+            const body = [
+              '**Gasten kunnen op dit moment niet reserveren.** De dagelijkse controle',
+              'kreeg geen normaal antwoord van de database.',
+              '',
+              '```',
+              probleem,
+              '```',
+              '',
+              `Volledige log: [de mislukte controle](${run}).`,
+              '',
+              'Dit issue sluit zichzelf zodra de database weer antwoordt.',
+            ].join('\n')
+
+            if (bestaand) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: bestaand.number,
+                body: `Nog steeds mis, bij [de controle van vandaag](${run}).`,
+              })
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: titel, labels: ['keepalive'], body,
+              })
+            }
+            core.setFailed(probleem.split('\n')[0])
