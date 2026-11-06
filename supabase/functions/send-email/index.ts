@@ -102,25 +102,37 @@ function formatDutchDate(dateStr: string): string {
 
 const guestsLabel = (n: number) => `${n} ${n === 1 ? 'persoon' : 'personen'}`
 
-// Kleuren sluiten aan bij de website: warm bruin, zachtgroen, crème.
+// ─── Vormgeving ───────────────────────────────────────────────────────────────
+// Luxe, typografische stijl: veel witruimte, Playfair Display voor koppen en
+// de datum, fijne lijnen in plaats van blokken, en het groen van de website als
+// enige accentkleur. Mailprogramma's die geen webfonts laden (Gmail, Outlook)
+// vallen terug op Georgia en Helvetica, dus het blijft er verzorgd uitzien.
+
 const C = {
-  bg: '#f0ebe0',
+  page: '#f3eee4',
   card: '#fffdf8',
-  dark: '#2c1f0f',
-  text: '#3d3128',
-  muted: '#7a6a5c',
-  faint: '#a89886',
-  line: '#e8dfd0',
+  ink: '#2c1f0f',
+  text: '#4a3d31',
+  muted: '#857565',
+  faint: '#ab9c8a',
+  hair: '#e7ddcc',
+  rule: '#d6c6ab',
   green: '#5a7a5e',
-  soft: '#faf6ef',
-  amberBg: '#fdf7ee',
-  amberLine: '#e6d3b3',
-  amberText: '#7a5c30',
+  soft: '#faf6ee',
 }
-const FONT = "Georgia, 'Times New Roman', serif"
-const SANS = "-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+const SERIF = "'Playfair Display', Georgia, 'Times New Roman', serif"
+const SANS = "Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
 
 // ─── Bouwstenen ───────────────────────────────────────────────────────────────
+
+const ornament = () => `
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+            <tr>
+              <td style="width:36px;border-top:1px solid ${C.rule};font-size:0;line-height:0;">&nbsp;</td>
+              <td style="padding:0 10px;font-family:${SERIF};font-size:9px;line-height:9px;color:${C.green};">&#9670;</td>
+              <td style="width:36px;border-top:1px solid ${C.rule};font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+          </table>`
 
 const emailWrapper = (preheader: string, content: string, footerNote = '') => `<!DOCTYPE html>
 <html lang="nl">
@@ -128,42 +140,56 @@ const emailWrapper = (preheader: string, content: string, footerNote = '') => `<
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>${escape(RESTAURANT.name)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @media (max-width: 620px) {
+    .px { padding-left: 26px !important; padding-right: 26px !important; }
+    .h1 { font-size: 26px !important; line-height: 1.25 !important; }
+    .big { font-size: 34px !important; }
+    .lbl { display: block !important; width: 100% !important; padding-bottom: 2px !important; border-bottom: none !important; }
+    .eyebrow { font-size: 9px !important; letter-spacing: 2px !important; }
+    .val { display: block !important; width: 100% !important; padding-top: 0 !important; }
+  }
+</style>
 </head>
-<body style="margin:0;padding:0;background-color:${C.bg};">
+<body style="margin:0;padding:0;background-color:${C.page};-webkit-text-size-adjust:100%;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">${escape(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${C.bg};padding:32px 12px;">
-    <tr><td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${C.card};border-radius:12px;overflow:hidden;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${C.page};">
+    <tr><td align="center" style="padding:44px 12px 40px 12px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:${C.card};border:1px solid ${C.hair};">
 
         <tr>
-          <td style="background-color:${C.dark};padding:32px 40px;text-align:center;">
-            <p style="margin:0 0 6px 0;font-family:${FONT};font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#c8b89a;">Lunchroom &middot; Dordrecht</p>
-            <h1 style="margin:0;font-family:${FONT};font-size:28px;font-weight:normal;color:${C.card};letter-spacing:1px;">${escape(RESTAURANT.name)}</h1>
+          <td class="px" align="center" style="padding:52px 56px 0 56px;">
+            <p class="eyebrow" style="margin:0 0 14px 0;font-family:${SANS};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${C.faint};">Lunchroom &middot; Groenmarkt &middot; Dordrecht</p>
+            <p style="margin:0 0 22px 0;font-family:${SERIF};font-size:30px;line-height:1.2;font-weight:400;letter-spacing:0.5px;color:${C.ink};">${escape(RESTAURANT.name)}</p>
+            ${ornament()}
           </td>
         </tr>
 
-        <tr><td style="padding:40px 40px 8px 40px;">${content}</td></tr>
+        <tr><td class="px" style="padding:44px 56px 8px 56px;">${content}</td></tr>
 
         <tr>
-          <td style="padding:24px 40px 32px 40px;border-top:1px solid ${C.line};">
-            ${footerNote ? `<p style="margin:0 0 16px 0;font-family:${SANS};font-size:12px;color:${C.faint};line-height:1.7;">${footerNote}</p>` : ''}
+          <td class="px" align="center" style="padding:8px 56px 48px 56px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;vertical-align:top;">
-                  <strong style="color:${C.dark};">${escape(RESTAURANT.name)}</strong><br>
-                  <a href="${RESTAURANT.mapsUrl}" style="color:${C.muted};text-decoration:none;">${escape(RESTAURANT.street)}, ${escape(RESTAURANT.city)}</a><br>
-                  <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a> &middot;
-                  <a href="mailto:${escape(RESTAURANT.email)}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.email)}</a><br>
-                  <span style="color:${C.faint};">${escape(RESTAURANT.hours)}</span>
-                </td>
-              </tr>
+              <tr><td style="border-top:1px solid ${C.hair};font-size:0;line-height:0;">&nbsp;</td></tr>
             </table>
+            <p style="margin:28px 0 6px 0;font-family:${SERIF};font-size:15px;font-style:italic;color:${C.text};">
+              <a href="${RESTAURANT.mapsUrl}" style="color:${C.text};text-decoration:none;">${escape(RESTAURANT.street)}, ${escape(RESTAURANT.city)}</a>
+            </p>
+            <p style="margin:0 0 10px 0;font-family:${SANS};font-size:13px;color:${C.muted};">
+              <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a>
+              &nbsp;&middot;&nbsp;
+              <a href="mailto:${escape(RESTAURANT.email)}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.email)}</a>
+            </p>
+            <p style="margin:0;font-family:${SANS};font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${C.faint};line-height:1.9;">${escape(RESTAURANT.hours)}</p>
+            ${footerNote ? `<p style="margin:22px 0 0 0;font-family:${SANS};font-size:11px;color:${C.faint};line-height:1.7;">${footerNote}</p>` : ''}
           </td>
         </tr>
 
       </table>
-      <p style="margin:16px 0 0 0;font-family:${SANS};font-size:11px;color:${C.faint};">
+      <p style="margin:20px 0 0 0;font-family:${SANS};font-size:10px;letter-spacing:3px;text-transform:uppercase;">
         <a href="${RESTAURANT.site}" style="color:${C.faint};text-decoration:none;">denwittenhaen.com</a>
       </p>
     </td></tr>
@@ -171,51 +197,90 @@ const emailWrapper = (preheader: string, content: string, footerNote = '') => `<
 </body>
 </html>`
 
-const detailRow = (label: string, value: string, last = false) => `
+// Kop van de mail: een klein label in het groen, een grote serif-titel en een
+// korte inleiding.
+const heading = (label: string, title: string, intro: string) => `
+    <p style="margin:0 0 14px 0;font-family:${SANS};font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:${C.green};text-align:center;">${label}</p>
+    <h1 class="h1" style="margin:0 0 16px 0;font-family:${SERIF};font-size:32px;line-height:1.25;font-weight:400;color:${C.ink};text-align:center;">${title}</h1>
+    <p style="margin:0 0 36px 0;font-family:${SANS};font-size:15px;line-height:1.75;color:${C.muted};text-align:center;">${intro}</p>`
+
+// De datum als middelpunt: weekdag in kapitalen, dag en maand groot in serif,
+// tijd en aantal personen cursief eronder. Tussen twee fijne lijnen.
+function dateBlock(dateStr: string, time: string, guests?: number) {
+  let weekday = ''
+  let dayMonth = escape(dateStr)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const d = new Date(dateStr + 'T12:00:00')
+    weekday = d.toLocaleDateString('nl-NL', { weekday: 'long' })
+    dayMonth = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+  }
+  const sub = [time ? `${escape(time)} uur` : '', guests ? escape(guestsLabel(guests)) : '']
+    .filter(Boolean)
+    .join(' &nbsp;&middot;&nbsp; ')
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;border-top:1px solid ${C.hair};border-bottom:1px solid ${C.hair};">
       <tr>
-        <td style="padding:14px 22px;${last ? '' : `border-bottom:1px solid ${C.line};`}">
-          <span style="font-family:${SANS};font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${C.faint};">${label}</span><br>
-          <span style="font-family:${FONT};font-size:17px;color:${C.dark};margin-top:3px;display:block;line-height:1.4;">${value}</span>
+        <td align="center" style="padding:30px 0 30px 0;">
+          ${weekday ? `<p style="margin:0 0 6px 0;font-family:${SANS};font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${C.faint};">${escape(weekday)}</p>` : ''}
+          <p class="big" style="margin:0 0 8px 0;font-family:${SERIF};font-size:42px;line-height:1.1;font-weight:400;color:${C.ink};">${escape(dayMonth)}</p>
+          ${sub ? `<p style="margin:0;font-family:${SERIF};font-size:17px;font-style:italic;color:${C.text};">${sub}</p>` : ''}
         </td>
-      </tr>`
-
-const detailTable = (rows: string) => `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.soft};border-radius:10px;border:1px solid ${C.line};margin:0 0 24px 0;">
-      ${rows}
+      </tr>
     </table>`
+}
 
-const heading = (title: string, intro: string) => `
-    <h2 style="margin:0 0 10px 0;font-family:${FONT};font-size:26px;font-weight:normal;color:${C.dark};text-align:center;line-height:1.3;">${title}</h2>
-    <p style="margin:0 0 28px 0;font-family:${SANS};font-size:15px;color:${C.muted};text-align:center;line-height:1.7;">${intro}</p>`
+// Rustige lijst met gegevens: label links in kleine kapitalen, waarde rechts.
+const detailList = (rows: Array<[string, string] | null>) => {
+  const list = rows.filter((r): r is [string, string] => r !== null)
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;">
+      ${list.map(([label, value], i) => `
+      <tr>
+        <td class="lbl" width="38%" valign="top" style="padding:13px 12px 13px 0;${i < list.length - 1 ? `border-bottom:1px solid ${C.hair};` : ''}font-family:${SANS};font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${C.faint};line-height:1.9;">${label}</td>
+        <td class="val" valign="top" style="padding:13px 0 13px 0;${i < list.length - 1 ? `border-bottom:1px solid ${C.hair};` : ''}font-family:${SERIF};font-size:16px;color:${C.ink};line-height:1.5;">${value}</td>
+      </tr>`).join('')}
+    </table>`
+}
 
 const button = (href: string, label: string) => `
-    <div style="text-align:center;margin:0 0 28px 0;">
-      <a href="${href}" style="display:inline-block;background:${C.green};color:${C.card};font-family:${SANS};font-size:14px;font-weight:600;letter-spacing:0.3px;text-decoration:none;padding:13px 28px;border-radius:6px;">${label}</a>
-    </div>`
+    <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 32px auto;">
+      <tr>
+        <td bgcolor="${C.ink}" style="background-color:${C.ink};">
+          <a href="${href}" style="display:inline-block;padding:16px 36px;font-family:${SANS};font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:${C.card};text-decoration:none;">${label}</a>
+        </td>
+      </tr>
+    </table>`
+
+const paragraph = (html: string) => `
+    <p style="margin:0 0 24px 0;font-family:${SANS};font-size:14px;line-height:1.8;color:${C.text};text-align:center;">${html}</p>`
+
+const phoneLink = () =>
+  `<a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a>`
+const mailLink = () =>
+  `<a href="mailto:${escape(RESTAURANT.email)}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.email)}</a>`
 
 const signOff = () => `
-    <p style="margin:0 0 24px 0;font-family:${SANS};font-size:14px;color:${C.text};line-height:1.8;">
-      Met vriendelijke groet,<br>
-      <strong>Team ${escape(RESTAURANT.name)}</strong>
-    </p>`
+    <p style="margin:8px 0 6px 0;font-family:${SERIF};font-size:16px;font-style:italic;color:${C.text};text-align:center;">Met hartelijke groet,</p>
+    <p style="margin:0 0 36px 0;font-family:${SANS};font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${C.ink};text-align:center;">Team ${escape(RESTAURANT.name)}</p>`
 
 const HIGH_TEA_NOTICE = `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.amberBg};border:1px solid ${C.amberLine};border-radius:10px;margin:0 0 24px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;background-color:${C.soft};border-left:2px solid ${C.rule};">
       <tr>
-        <td style="padding:16px 22px;font-family:${SANS};font-size:13px;color:${C.amberText};line-height:1.7;">
-          <strong style="color:#5a4420;">Annuleringsvoorwaarde high tea</strong><br>
-          Annuleren kan tot uiterlijk 48 uur van tevoren. Bij annulering binnen 48 uur
-          voor aanvang wordt de high tea alsnog in rekening gebracht.
+        <td style="padding:18px 22px;">
+          <p style="margin:0 0 6px 0;font-family:${SANS};font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${C.ink};">Annuleringsvoorwaarde high tea</p>
+          <p style="margin:0;font-family:${SANS};font-size:13px;line-height:1.75;color:${C.text};">Annuleren kan tot uiterlijk 48 uur van tevoren. Bij annulering binnen 48 uur voor aanvang wordt de high tea alsnog in rekening gebracht.</p>
         </td>
       </tr>
     </table>`
 
 const cancelLine = (url: string) => url
-  ? `<p style="margin:0 0 24px 0;font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;text-align:center;">
-      Kunt u er toch niet bij zijn?
-      <a href="${url}" style="color:${C.green};">Annuleer uw reservering online</a>.
+  ? `<p style="margin:0 0 28px 0;font-family:${SANS};font-size:13px;line-height:1.8;color:${C.muted};text-align:center;">
+      Kunt u er toch niet bij zijn? <a href="${url}" style="color:${C.green};text-decoration:underline;">Annuleer uw reservering online</a>.
     </p>`
   : ''
+
+const locationValue = () =>
+  `${escape(RESTAURANT.street)}<br>${escape(RESTAURANT.city)}<br><a href="${RESTAURANT.mapsUrl}" style="font-family:${SANS};font-size:12px;letter-spacing:1px;color:${C.green};text-decoration:none;">Routebeschrijving &rsaquo;</a>`
 
 // ─── Reserveringsmails naar de gast ───────────────────────────────────────────
 
@@ -238,45 +303,28 @@ function buildReservationMail(r: ReservationInput, confirmed: boolean) {
 
   const preheader = `${typeLabel} voor ${guestsLabel(r.guests)} op ${formattedDate.toLowerCase()} om ${r.time}.`
 
-  const rows = [
-    detailRow('Reservering', escape(typeLabel)),
-    detailRow('Datum', escape(formattedDate)),
-    detailRow('Tijd', `${escape(r.time)} uur`),
-    detailRow('Aantal personen', escape(guestsLabel(r.guests))),
-    seatingLabel ? detailRow('Zitplaatsvoorkeur', escape(seatingLabel)) : '',
-    r.message ? detailRow('Uw opmerking', `<span style="font-size:15px;color:${C.text};">${nl2br(r.message)}</span>`) : '',
-    detailRow(
-      'Locatie',
-      `${escape(RESTAURANT.street)}, ${escape(RESTAURANT.city)}<br><a href="${RESTAURANT.mapsUrl}" style="font-family:${SANS};font-size:13px;color:${C.green};text-decoration:none;">Routebeschrijving &rsaquo;</a>`,
-      true,
-    ),
-  ].join('')
+  const details = detailList([
+    ['Reservering', escape(typeLabel)],
+    seatingLabel ? ['Zitplaats', escape(seatingLabel)] : null,
+    r.message ? ['Uw opmerking', `<span style="font-family:${SANS};font-size:14px;color:${C.text};">${nl2br(r.message)}</span>`] : null,
+    ['Locatie', locationValue()],
+  ])
 
-  const title = confirmed ? 'Uw reservering is bevestigd' : 'Wij hebben uw reservering ontvangen'
-  const intro = confirmed
-    ? `Beste ${escape(r.name)}, uw reservering staat genoteerd.<br>We kijken ernaar uit u te verwelkomen.`
-    : `Beste ${escape(r.name)}, bedankt voor uw reservering.<br>Hieronder vindt u de gegevens.`
+  const head = confirmed
+    ? heading('Bevestigd', 'Wij verwachten u', `Beste ${escape(r.name)}, uw reservering staat genoteerd. We kijken ernaar uit u te verwelkomen aan de Groenmarkt.`)
+    : heading('Reservering ontvangen', 'Dank u wel', `Beste ${escape(r.name)}, uw reservering is bij ons binnen. Zodra wij hem hebben bevestigd, ontvangt u nog een bericht.`)
 
-  const statusNote = confirmed
-    ? ''
-    : `<p style="margin:0 0 24px 0;font-family:${SANS};font-size:14px;color:${C.text};line-height:1.8;">
-        <strong style="color:${C.dark};">Wat gebeurt er nu?</strong><br>
-        Wij nemen uw reservering door en sturen u een bevestiging zodra deze definitief is.
-        Hoort u onverhoopt niets, bel ons dan gerust op
-        <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a>.
-      </p>`
+  const afterDetails = confirmed
+    ? button(RESTAURANT.mapsUrl, 'Route bekijken')
+    : paragraph(`Hoort u onverhoopt niets van ons? Bel ons gerust op ${phoneLink()}.`)
 
   const html = emailWrapper(preheader, `
-    ${heading(title, intro)}
-    ${detailTable(rows)}
+    ${head}
+    ${dateBlock(r.date, r.time, r.guests)}
+    ${details}
     ${isHighTea ? HIGH_TEA_NOTICE : ''}
-    ${statusNote}
-    <p style="margin:0 0 20px 0;font-family:${SANS};font-size:14px;color:${C.text};line-height:1.8;">
-      ${seatingLabel ? 'Met uw zitplaatsvoorkeur houden wij rekening, maar wij kunnen een plek niet garanderen.<br>' : ''}
-      Wilt u iets wijzigen? Laat het ons weten via
-      <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a> of
-      <a href="mailto:${escape(RESTAURANT.email)}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.email)}</a>.
-    </p>
+    ${afterDetails}
+    ${paragraph(`${seatingLabel ? 'Met uw zitplaatsvoorkeur houden wij rekening, al kunnen wij een plek niet garanderen.<br>' : ''}Iets wijzigen? Bel ${phoneLink()} of mail ${mailLink()}.`)}
     ${cancelLine(url)}
     ${signOff()}
   `, 'U ontvangt deze e-mail omdat u een reservering heeft gemaakt via denwittenhaen.com. Antwoorden op deze e-mail komen bij het restaurant terecht.')
@@ -319,12 +367,9 @@ function buildCancellationMail(r: { name: string; date: string; time: string }) 
   const preheader = `Uw reservering bij Den Witten Haen op ${formattedDate.toLowerCase()} om ${r.time} is geannuleerd.`
 
   const html = emailWrapper(preheader, `
-    ${heading('Uw reservering is geannuleerd', `Beste ${escape(r.name)}, uw reservering bij ${escape(RESTAURANT.name)} is geannuleerd.`)}
-    ${detailTable(detailRow('Datum', escape(formattedDate)) + detailRow('Tijd', `${escape(r.time)} uur`, true))}
-    <p style="margin:0 0 20px 0;font-family:${SANS};font-size:14px;color:${C.text};line-height:1.8;text-align:center;">
-      Was dit niet de bedoeling, of wilt u een nieuwe datum kiezen?<br>
-      Bel ons op <a href="${RESTAURANT.phoneHref}" style="color:${C.green};text-decoration:none;">${escape(RESTAURANT.phone)}</a> of reserveer opnieuw online.
-    </p>
+    ${heading('Geannuleerd', 'Uw reservering is geannuleerd', `Beste ${escape(r.name)}, de onderstaande reservering bij ${escape(RESTAURANT.name)} is geannuleerd.`)}
+    ${dateBlock(r.date, r.time)}
+    ${paragraph(`Was dit niet de bedoeling, of kiest u liever een andere datum? Bel ons op ${phoneLink()} of reserveer opnieuw online.`)}
     ${button(`${RESTAURANT.site}/reserveren`, 'Opnieuw reserveren')}
     ${signOff()}
   `, 'U ontvangt deze e-mail omdat een reservering op uw naam bij Den Witten Haen is geannuleerd.')
@@ -355,15 +400,9 @@ function buildGuestCancelledMail(r: { name: string; date: string; time: string }
   const html = emailWrapper(
     `${r.name} heeft de reservering van ${shortDate} om ${r.time} geannuleerd.`,
     `
-    ${heading('Een gast heeft geannuleerd', 'Deze reservering is via de website geannuleerd en staat in het dashboard al op geannuleerd.')}
-    ${detailTable(
-      detailRow('Naam', escape(r.name)) +
-      detailRow('Datum', escape(formattedDate)) +
-      detailRow('Tijd', `${escape(r.time)} uur`, true),
-    )}
-    <p style="margin:0 0 20px 0;font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;text-align:center;">
-      Het tijdslot is weer beschikbaar voor andere gasten. U hoeft niets te doen.
-    </p>
+    ${heading('Annulering via de website', `${escape(r.name)} heeft geannuleerd`, 'De reservering staat in het dashboard al op geannuleerd.')}
+    ${dateBlock(r.date, r.time)}
+    ${paragraph('Het tijdslot is weer beschikbaar voor andere gasten. U hoeft niets te doen.')}
   `,
     'Deze e-mail is automatisch verstuurd door het reserveringssysteem op denwittenhaen.com.',
   )
@@ -398,25 +437,18 @@ function buildGroupRequestMail(r: GroupInput) {
   const preheader = `${typeLabel} voor ${guestsLabel(r.guests)} · ${r.phone} · ${r.email}`
   const phoneDigits = r.phone.replace(/[^\d+]/g, '')
 
-  const rows = [
-    detailRow('Naam', escape(r.name)),
-    detailRow('Telefoon', phoneDigits ? `<a href="tel:${escape(phoneDigits)}" style="color:${C.green};text-decoration:none;">${escape(r.phone)}</a>` : 'Niet opgegeven'),
-    detailRow('E-mail', `<a href="mailto:${escape(r.email)}" style="color:${C.green};text-decoration:none;">${escape(r.email)}</a>`),
-    detailRow('Type', escape(typeLabel)),
-    detailRow('Gewenste datum', escape(formattedDate)),
-    detailRow('Aantal personen', escape(guestsLabel(r.guests))),
-    detailRow('Opmerking', r.message ? `<span style="font-size:15px;color:${C.text};">${nl2br(r.message)}</span>` : 'Geen', true),
-  ].join('')
-
   const html = emailWrapper(preheader, `
-    ${heading('Nieuwe groepsaanvraag', 'Een gast heeft via de website een aanvraag gedaan voor een groep van meer dan 8 personen.')}
-    ${detailTable(rows)}
+    ${heading('Groepsaanvraag', `${escape(guestsLabel(r.guests))}`, `${escape(r.name)} wil graag met een groep komen. De gast heeft nog <strong style="color:${C.ink};font-weight:600;">geen bevestiging</strong> ontvangen.`)}
+    ${detailList([
+      ['Naam', escape(r.name)],
+      ['Telefoon', phoneDigits ? `<a href="tel:${escape(phoneDigits)}" style="color:${C.green};text-decoration:none;">${escape(r.phone)}</a>` : 'Niet opgegeven'],
+      ['E-mail', `<a href="mailto:${escape(r.email)}" style="color:${C.green};text-decoration:none;word-break:break-all;">${escape(r.email)}</a>`],
+      ['Type', escape(typeLabel)],
+      ['Gewenste datum', escape(formattedDate)],
+      ['Opmerking', r.message ? `<span style="font-family:${SANS};font-size:14px;color:${C.text};">${nl2br(r.message)}</span>` : `<span style="color:${C.faint};">Geen</span>`],
+    ])}
     ${button(`mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent(`Uw groepsaanvraag bij Den Witten Haen op ${shortDate}`)}`, 'Gast beantwoorden')}
-    <p style="margin:0 0 20px 0;font-family:${SANS};font-size:13px;color:${C.muted};line-height:1.8;text-align:center;">
-      De gast heeft nog <strong>geen bevestiging</strong> ontvangen. Neem contact op om de details en
-      beschikbaarheid af te stemmen.<br>
-      Antwoorden op deze e-mail gaat rechtstreeks naar de gast.
-    </p>
+    ${paragraph('Neem contact op om de details en de beschikbaarheid af te stemmen. Een antwoord op deze e-mail gaat rechtstreeks naar de gast.')}
   `, 'Deze e-mail is automatisch verstuurd door het reserveringsformulier op denwittenhaen.com.')
 
   const text = [
