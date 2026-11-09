@@ -114,7 +114,7 @@ const food: MenuCategory[] = [
     id: "salades",
     title: "Salades",
     items: [
-      { name: "Carpaccio", desc: "Spek · kappertjes · mesclun · parmezaan · ui · tomaat", price: "€ 14,50" },
+      { name: "Carpaccio", desc: "Spek · kappertjes · mesclun · parmezaan · ui · tomaat · truffelmayo", price: "€ 14,50" },
       { name: "Geitenkaas salade", desc: "Zoetzure pompoen · druiven · aceto dressing · walnoten · pecannoten", price: "€ 14,50", vega: true },
     ],
   },
