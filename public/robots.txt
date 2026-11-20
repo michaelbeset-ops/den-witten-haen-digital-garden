@@ -12,3 +12,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Disallow: /dashboard
+Disallow: /login
+Disallow: /reset-wachtwoord
+Disallow: /annuleren
+
+Sitemap: https://denwittenhaen.com/sitemap.xml

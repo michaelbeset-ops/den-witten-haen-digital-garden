@@ -1,10 +1,26 @@
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+// Alleen onze eigen site mag deze functie vanuit de browser aanroepen. Dat
+// stopt misbruik vanaf een vreemde pagina; het is geen vervanging voor
+// controle aan de serverkant, want CORS geldt alleen in de browser.
+const ALLOWED_ORIGINS = [
+  'https://denwittenhaen.com',
+  'https://www.denwittenhaen.com',
+  'http://localhost:8080',
+  'http://localhost:5173',
+]
+
+const corsHeaders = (req: Request): Record<string, string> => {
+  const origin = req.headers.get('Origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 Deno.serve(async (req: Request) => {
+  const CORS = corsHeaders(req)
+
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
 
   const json = (data: unknown, status = 200) =>

@@ -73,17 +73,21 @@ const PrivacyPage = () => (
         </p>
         <ul className="list-disc list-inside space-y-1 pl-2">
           <li>
-            <strong>Hostingprovider</strong> – voor het opslaan en verzenden van formuliergegevens,
+            <strong>Onze hostingprovider</strong>, voor het opslaan van de reserveringsgegevens,
             uitsluitend binnen de EU.
           </li>
           <li>
-            <strong>Google Analytics</strong> – indien u analytische cookies accepteert, worden
-            geanonimiseerde websitebezoekgegevens verwerkt. Zie ons{" "}
-            <Link to="/cookies" className="underline underline-offset-2 hover:text-foreground transition-colors">
-              cookiebeleid
-            </Link>.
+            <strong>Onze e-mailprovider</strong>, voor het versturen van de bevestigings- en
+            annuleringsmails.
           </li>
         </ul>
+        <p>
+          Wij gebruiken geen trackingsoftware zoals Google Analytics en volgen uw gedrag op deze
+          website niet. Zie ons{" "}
+          <Link to="/cookies" className="underline underline-offset-2 hover:text-foreground transition-colors">
+            cookiebeleid
+          </Link>.
+        </p>
         <p>
           Met verwerkers hebben wij verwerkersovereenkomsten gesloten conform art. 28 AVG.
         </p>
@@ -114,13 +118,13 @@ const PrivacyPage = () => (
       <Section id="rechten" title="7. Uw rechten">
         <p>Op grond van de AVG heeft u de volgende rechten:</p>
         <ul className="list-disc list-inside space-y-1 pl-2">
-          <li><strong>Inzage</strong> – u mag opvragen welke gegevens wij van u hebben.</li>
-          <li><strong>Rectificatie</strong> – u mag onjuiste gegevens laten corrigeren.</li>
-          <li><strong>Verwijdering</strong> – u kunt verzoeken uw gegevens te wissen ("recht op vergetelheid").</li>
-          <li><strong>Bezwaar</strong> – u kunt bezwaar maken tegen verwerking.</li>
-          <li><strong>Beperking</strong> – u kunt vragen de verwerking te beperken.</li>
-          <li><strong>Overdraagbaarheid</strong> – u kunt uw gegevens in een gangbaar formaat opvragen.</li>
-          <li><strong>Intrekking toestemming</strong> – u kunt eerder gegeven toestemming altijd intrekken.</li>
+          <li><strong>Inzage</strong>: u mag opvragen welke gegevens wij van u hebben.</li>
+          <li><strong>Rectificatie</strong>: u mag onjuiste gegevens laten corrigeren.</li>
+          <li><strong>Verwijdering</strong>: u kunt verzoeken uw gegevens te wissen ("recht op vergetelheid").</li>
+          <li><strong>Bezwaar</strong>: u kunt bezwaar maken tegen verwerking.</li>
+          <li><strong>Beperking</strong>: u kunt vragen de verwerking te beperken.</li>
+          <li><strong>Overdraagbaarheid</strong>: u kunt uw gegevens in een gangbaar formaat opvragen.</li>
+          <li><strong>Intrekking toestemming</strong>: u kunt eerder gegeven toestemming altijd intrekken.</li>
         </ul>
         <p>
           Stuur uw verzoek naar{" "}

@@ -12,6 +12,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import MenuPage from "./pages/Menu";
 import ReservationPage from "./pages/Reserveren";
+import CancelPage from "./pages/Annuleren";
 import PrivacyPage from "./pages/Privacy";
 import CookiePage from "./pages/Cookies";
 import GroupsPage from "./pages/Groepen";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/reserveren" element={<ReservationPage />} />
+            <Route path="/annuleren" element={<CancelPage />} />
             <Route path="/groepen" element={<GroupsPage />} />
             <Route path="/locaties" element={<LocationsPage />} />
             <Route path="/team" element={<TeamPage />} />
@@ -60,7 +62,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Route>
 
-          {/* Auth / admin routes — no global Navbar/Footer */}
+          {/* Inlog- en beheerpagina's: zonder algemene navigatiebalk en voettekst */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/reset-wachtwoord" element={<ResetWachtwoordPage />} />
           <Route

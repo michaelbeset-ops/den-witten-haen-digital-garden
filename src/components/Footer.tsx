@@ -27,8 +27,8 @@ const Footer = () => (
         <p className="text-sm opacity-80">E-mail: <a href="mailto:denwittenhaen@philadelphia.nl" className="hover:opacity-100">denwittenhaen@philadelphia.nl</a></p>
         <div className="mt-3">
           <h4 className="text-sm font-semibold mb-1">Openingstijden</h4>
-          <p className="text-sm opacity-80">Ma t/m wo: 09:00 – 16:00</p>
-          <p className="text-sm opacity-80">Do t/m za: 10:00 – 17:00</p>
+          <p className="text-sm opacity-80">Ma t/m vr: 10:00 tot 16:00</p>
+          <p className="text-sm opacity-80">Za: 10:00 tot 17:00</p>
           <p className="text-sm opacity-80">Zo: gesloten</p>
         </div>
       </div>
@@ -38,6 +38,8 @@ const Footer = () => (
           <Link to="/" className="opacity-80 hover:opacity-100 transition-opacity">Home</Link>
           <Link to="/menu" className="opacity-80 hover:opacity-100 transition-opacity">Menu</Link>
           <Link to="/reserveren" className="opacity-80 hover:opacity-100 transition-opacity">Reserveren</Link>
+          <Link to="/groepen" className="opacity-80 hover:opacity-100 transition-opacity">Groepen &amp; Vergaderen</Link>
+          <Link to="/locaties" className="opacity-80 hover:opacity-100 transition-opacity">Locatie</Link>
           <Link to="/team" className="opacity-80 hover:opacity-100 transition-opacity">Ons Team</Link>
           <Link to="/privacy" className="opacity-80 hover:opacity-100 transition-opacity">Privacybeleid</Link>
           <Link to="/cookies" className="opacity-80 hover:opacity-100 transition-opacity">Cookiebeleid</Link>
@@ -51,7 +53,7 @@ const Footer = () => (
         <p className="text-xs opacity-60">Onderdeel van</p>
         <img
           src={philadelphiaLogo}
-          alt="Philadelphia – Het beste uit elkaar"
+          alt="Philadelphia, het beste uit elkaar"
           className="h-12 object-contain"
           loading="lazy"
         />
