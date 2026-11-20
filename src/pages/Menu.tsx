@@ -267,7 +267,7 @@ const MenuPage = () => (
         <p className="text-xs font-sans tracking-[3px] uppercase text-primary-foreground/60 mb-1">Signature</p>
         <div className="flex justify-between items-start gap-4 mb-3">
           <h2 className="font-serif text-2xl">High Tea</h2>
-          <span className="font-sans font-bold text-xl">€ 24,50 <span className="text-sm font-normal opacity-70">p.p.</span></span>
+          <span className="font-sans font-bold text-xl">€ 26,50 <span className="text-sm font-normal opacity-70">p.p.</span></span>
         </div>
         <p className="text-sm text-primary-foreground/80 font-sans leading-relaxed">
           Huisgemaakte zoete & hartige lekkernijen, belegde broodjes, scones en keuze uit het thee assortiment.
